@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./workspace.css";
 import "./guest.css";
+import "./meeting.css";
 
 export const metadata: Metadata = {
   title: "Munaffa — Immersive Hospitality Experience",
