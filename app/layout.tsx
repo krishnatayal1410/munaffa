@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Sora } from "next/font/google";
+import type { ReactNode } from "react";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -10,6 +11,6 @@ export const metadata: Metadata = {
   description: "AI-powered operating system for hotels, restaurants, cafes, cloud kitchens, resorts, bars and hospitality businesses.",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return <html lang="en"><body className={`${inter.variable} ${sora.variable}`}>{children}</body></html>;
 }
