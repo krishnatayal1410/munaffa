@@ -1,17 +1,6 @@
-import { Nav } from "@/components/Nav";
-import { RestaurantWorld } from "@/components/RestaurantWorld";
-import { ExperienceController } from "@/components/ExperienceController";
-import { StoryLive } from "@/components/StoryLive";
+import { SiteNav } from "@/components/SiteNav";
+import { ImmersiveHome } from "@/components/ImmersiveHome";
 
-export default function Home() {
-  return (
-    <div>
-      <Nav />
-      <RestaurantWorld />
-      <ExperienceController />
-      <main className="relative z-10">
-        <StoryLive />
-      </main>
-    </div>
-  );
+export default function HomePage() {
+  return <><SiteNav/><ImmersiveHome/></>;
 }
