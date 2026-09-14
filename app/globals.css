@@ -1,23 +1,9 @@
+@import "./styles/site.css";
+@import "./styles/marketing.css";
+@import "./styles/auth.css";
+@import "./styles/dashboard.css";
+@import "./styles/responsive.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-html,body{margin:0;background:#07100B;color:#F4F7F4;font-family:Inter,system-ui,sans-serif;overflow-x:hidden}
-*{box-sizing:border-box}
-.hero-title,.section-title{font-family:Sora,Inter,system-ui,sans-serif;letter-spacing:-.05em;line-height:.98;margin:0}
-.hero-title{font-size:clamp(54px,6vw,100px)}
-.section-title{font-size:clamp(42px,4.5vw,74px)}
-.hero-title span,.section-title span{color:#A8F36A}
-.eyebrow{color:#C6FF9C;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;margin-bottom:18px}
-.lede{color:#B6C3BA;font-size:18px;max-width:640px;margin:24px 0 30px}
-.scene{position:relative;z-index:10;display:flex;min-height:112vh;align-items:center;padding:14vh 6vw}
-.scene.right{justify-content:flex-end}
-.scene-copy{width:min(610px,48vw)}
-.glass{border:1px solid rgba(255,255,255,.09);background:rgba(8,17,12,.64);backdrop-filter:blur(14px)}
-.chips{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:24px}
-.chip{border:1px solid rgba(255,255,255,.09);border-radius:12px;background:rgba(0,0,0,.2);padding:10px 12px;font-size:12px;color:rgba(255,255,255,.72)}
-.link{display:inline-flex;margin-top:18px;color:#A8F36A;font-size:13px;font-weight:700}
-.cta{display:inline-flex;min-height:48px;align-items:center;justify-content:center;border-radius:16px;padding:0 20px;font-size:14px;font-weight:700}
-.cta.primary{background:#A8F36A;color:#07100B}.cta.secondary{border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04)}
-.subpage{min-height:100vh;background:#07100B}.submain{padding:150px 6vw 80px}.subgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:70px}.subcard{border:1px solid rgba(255,255,255,.08);border-radius:22px;background:rgba(255,255,255,.03);padding:24px}
-@media(max-width:760px){.scene{min-height:105vh;align-items:flex-end;padding:120px 20px 12vh}.scene-copy{width:100%}.subgrid{grid-template-columns:1fr}}
