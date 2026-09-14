@@ -3,6 +3,7 @@ import "./globals.css";
 import "./workspace.css";
 import "./guest.css";
 import "./meeting.css";
+import "./qr.css";
 
 export const metadata: Metadata = {
   title: "Munaffa — Immersive Hospitality Experience",
