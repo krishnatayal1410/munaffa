@@ -5,6 +5,7 @@ import type { WorkspaceContext } from "./workspaceBackend";
 
 export type FoodServiceType = "dine_in" | "room_service" | "counter" | "takeaway" | "delivery" | "other";
 export type FoodOrderStatus = "new" | "accepted" | "preparing" | "ready" | "served" | "completed" | "cancelled";
+export type FoodOrderOrigin = "staff" | "guest_qr";
 
 export type MenuCategoryRecord = {
   id: string;
@@ -49,6 +50,7 @@ export type FoodOrderRecord = {
   id: string;
   serviceType: FoodServiceType;
   serviceReference: string;
+  createdVia: FoodOrderOrigin;
   notes: string;
   status: FoodOrderStatus;
   subtotal: number;
@@ -69,7 +71,7 @@ function requireWorkspace(context: WorkspaceContext) {
   const client = getSupabaseBrowserClient();
   if (!client) throw new Error("Production backend is not configured.");
   if (!context.organizationId || !context.propertyId) {
-    throw new Error("Food service is not initialized. Apply Supabase migrations through 010, then sign in again.");
+    throw new Error("Food service is not initialized. Apply Supabase migrations through 012, then sign in again.");
   }
   return { client, organizationId: context.organizationId, propertyId: context.propertyId };
 }
@@ -238,12 +240,12 @@ export async function listFoodOrders(context: WorkspaceContext): Promise<FoodOrd
   const { client, organizationId, propertyId } = requireWorkspace(context);
   const { data: orders, error: orderError } = await client
     .from("orders")
-    .select("id,service_type,service_reference,notes,status,subtotal,currency,completed_at,created_at")
+    .select("id,service_type,service_reference,created_via,notes,status,subtotal,currency,completed_at,created_at")
     .eq("organization_id", organizationId)
     .eq("property_id", propertyId)
     .order("created_at", { ascending: false })
     .limit(100);
-  if (orderError) throw new Error(orderError.message);
+  if (orderError) throw new Error(`${orderError.message}. Apply Supabase migrations through 012 for guest QR order origin fields.`);
   if (!orders || orders.length === 0) return [];
 
   const orderIds = orders.map((row) => String((row as Record<string, unknown>).id));
@@ -273,10 +275,13 @@ export async function listFoodOrders(context: WorkspaceContext): Promise<FoodOrd
   return orders.map((row) => {
     const raw = row as Record<string, unknown>;
     const id = String(raw.id);
+    const createdVia = String(raw.created_via || "staff") as FoodOrderOrigin;
+    const rawReference = String(raw.service_reference || "");
     return {
       id,
       serviceType: String(raw.service_type || "other") as FoodServiceType,
-      serviceReference: String(raw.service_reference || ""),
+      serviceReference: createdVia === "guest_qr" ? `Guest QR${rawReference ? ` · ${rawReference}` : ""}` : rawReference,
+      createdVia,
       notes: String(raw.notes || ""),
       status: String(raw.status || "new") as FoodOrderStatus,
       subtotal: Number(raw.subtotal || 0),
