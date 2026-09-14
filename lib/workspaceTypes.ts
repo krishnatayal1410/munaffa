@@ -1,0 +1,13 @@
+export type LocationType = "restaurant" | "cafe" | "hotel" | "resort" | "qsr" | "cloud-kitchen";
+export type OrderStatus = "accepted" | "preparing" | "ready" | "completed";
+export type TeamRole = "Owner" | "Manager" | "Cashier" | "Kitchen" | "Inventory" | "Service";
+export type Location = { id:string; name:string; type:LocationType; city:string };
+export type RecipeLine = { inventoryId:string; qty:number };
+export type MenuItem = { id:string; locationId:string; name:string; category:string; price:number; recipe:RecipeLine[] };
+export type OrderLine = { menuId:string; name:string; qty:number; price:number };
+export type Order = { id:string; locationId:string; serviceRef:string; channel:"staff"|"guest-qr"; status:OrderStatus; items:OrderLine[]; total:number; createdAt:string };
+export type InventoryItem = { id:string; locationId:string; name:string; unit:string; theoreticalQty:number; physicalQty:number; reorderPoint:number; unitCost:number };
+export type Purchase = { id:string; locationId:string; supplier:string; itemId:string; itemName:string; quantity:number; unitCost:number; total:number; createdAt:string };
+export type GuestIssue = { id:string; locationId:string; guest:string; channel:string; rating:number; note:string; status:"open"|"resolved"; createdAt:string };
+export type FinanceEvent = { id:string; locationId:string; type:"revenue"|"expense"; label:string; amount:number; createdAt:string };
+export type TeamMember = { id:string; name:string; role:TeamRole; status:"active"|"invited" };
