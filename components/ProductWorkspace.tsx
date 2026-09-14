@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Bot, CheckCircle2, CircleAlert, ClipboardCheck, Clock3, IndianRupee, PackageCheck, RefreshCw, Send, Sparkles, Star, Users } from "lucide-react";
+import { Bot, CheckCircle2, CircleAlert, ClipboardCheck, Clock3, IndianRupee, RefreshCw, Send, Sparkles, Star, Users } from "lucide-react";
+import { usePersistentSampleState } from "@/lib/usePersistentSampleState";
 
 type WorkStatus = "Queued" | "In progress" | "Complete";
 
@@ -22,7 +23,7 @@ const initialWork: WorkItem[] = [
 ];
 
 export function OperationsWorkspace() {
-  const [items, setItems] = useState(initialWork);
+  const [items, setItems, resetItems] = usePersistentSampleState("munaffa.sample.operations.v1", initialWork);
   const counts = useMemo(() => ({
     queued: items.filter((item) => item.status === "Queued").length,
     active: items.filter((item) => item.status === "In progress").length,
@@ -38,8 +39,9 @@ export function OperationsWorkspace() {
 
   return <WorkspaceShell eyebrow="Interactive sample" title="Operations command queue" description="Move sample work through the same kind of operational queue Munaffa is designed to unify across rooms, tables, kitchen and guest service.">
     <div className="workspace-kpis"><Kpi label="Queued" value={String(counts.queued)} /><Kpi label="In progress" value={String(counts.active)} /><Kpi label="Completed" value={String(counts.complete)} /><Kpi label="SLA risk" value={String(items.filter((item) => item.priority === "High" && item.status !== "Complete").length)} tone="warning" /></div>
+    <SampleToolbar onReset={resetItems} />
     <div className="work-list">{items.map((item) => <article key={item.id} className={`work-item status-${item.status.toLowerCase().replace(" ", "-")}`}><div className="work-icon">{item.status === "Complete" ? <CheckCircle2 size={18}/> : item.priority === "High" ? <CircleAlert size={18}/> : <Clock3 size={18}/>}</div><div className="work-copy"><small>{item.area} · {item.id}</small><b>{item.title}</b><span>{item.detail}</span></div><div className="work-status"><em>{item.status}</em><button onClick={() => advance(item.id)}>{item.status === "Complete" ? "Reopen" : item.status === "Queued" ? "Start" : "Complete"}</button></div></article>)}</div>
-    <DemoNotice />
+    <DemoNotice text="This sample queue is stored only in this browser so you can refresh without losing your walkthrough progress." />
   </WorkspaceShell>;
 }
 
@@ -52,7 +54,7 @@ const initialStock: StockItem[] = [
 ];
 
 export function InventoryWorkspace() {
-  const [stock, setStock] = useState(initialStock);
+  const [stock, setStock, resetStock] = usePersistentSampleState("munaffa.sample.inventory.v1", initialStock);
   const [lastCount, setLastCount] = useState("Sample opening count");
 
   function adjust(index: number, change: number) {
@@ -60,30 +62,38 @@ export function InventoryWorkspace() {
     setLastCount("Edited just now");
   }
 
+  function resetInventory() {
+    resetStock();
+    setLastCount("Sample opening count");
+  }
+
   const totalVariance = stock.reduce((total, item) => total + Math.abs(item.physical - item.theoretical), 0);
 
   return <WorkspaceShell eyebrow="Inventory intelligence" title="Count what exists. Compare what should exist." description="Munaffa keeps theoretical recipe consumption separate from physical stock so variance can be investigated without pretending every gram is measured perfectly.">
     <div className="workspace-kpis"><Kpi label="Items counted" value={String(stock.length)} /><Kpi label="Absolute variance" value={totalVariance.toFixed(1)} /><Kpi label="Below reorder" value={String(stock.filter((item) => item.physical <= item.reorder).length)} tone="warning" /><Kpi label="Last count" value={lastCount} compact /></div>
+    <SampleToolbar onReset={resetInventory} />
     <div className="inventory-table"><div className="inventory-row inventory-head"><span>Ingredient</span><span>Theoretical</span><span>Physical</span><span>Variance</span><span>Recount</span></div>{stock.map((item, index) => { const variance = Number((item.physical - item.theoretical).toFixed(1)); return <div className="inventory-row" key={item.name}><span><b>{item.name}</b><small>Reorder at {item.reorder}{item.unit}</small></span><span>{item.theoretical}{item.unit}</span><span>{item.physical}{item.unit}</span><span className={Math.abs(variance) >= 1 ? "variance-alert" : "variance-ok"}>{variance > 0 ? "+" : ""}{variance}{item.unit}</span><span className="count-controls"><button onClick={() => adjust(index, -0.1)}>−</button><button onClick={() => adjust(index, 0.1)}>+</button></span></div>; })}</div>
-    <DemoNotice text="Variance is a signal to investigate. It is not proof of theft, waste or any single cause." />
+    <DemoNotice text="Variance is a signal to investigate. It is not proof of theft, waste or any single cause. Sample recounts persist only in this browser." />
   </WorkspaceShell>;
 }
 
+type ProfitModel = { revenue: number; directCost: number; labor: number; overhead: number; variance: number };
+const initialProfitModel: ProfitModel = { revenue: 850000, directCost: 31, labor: 18, overhead: 22, variance: 2.5 };
+
 export function ProfitWorkspace() {
-  const [revenue, setRevenue] = useState(850000);
-  const [directCost, setDirectCost] = useState(31);
-  const [labor, setLabor] = useState(18);
-  const [overhead, setOverhead] = useState(22);
-  const [variance, setVariance] = useState(2.5);
+  const [model, setModel, resetModel] = usePersistentSampleState("munaffa.sample.profit.v1", initialProfitModel);
+  const { revenue, directCost, labor, overhead, variance } = model;
   const direct = revenue * directCost / 100;
   const laborCost = revenue * labor / 100;
   const overheadCost = revenue * overhead / 100;
   const possibleVariance = revenue * variance / 100;
   const operatingContribution = revenue - direct - laborCost - overheadCost;
+  const setField = (field: keyof ProfitModel) => (value: number) => setModel((current) => ({ ...current, [field]: value }));
 
   return <WorkspaceShell eyebrow="Illustrative profit model" title="See what happens after revenue." description="Change the sample assumptions and watch operating contribution and potential variance move. This is a planning model, not an audited P&L.">
-    <div className="profit-layout"><section className="profit-controls"><Slider label="Monthly revenue" value={revenue} min={200000} max={3000000} step={50000} format={(value) => `₹${Math.round(value / 1000)}k`} onChange={setRevenue}/><Slider label="Direct / food cost" value={directCost} min={10} max={60} step={1} format={(value) => `${value}%`} onChange={setDirectCost}/><Slider label="Labor" value={labor} min={5} max={40} step={1} format={(value) => `${value}%`} onChange={setLabor}/><Slider label="Other operating overhead" value={overhead} min={5} max={45} step={1} format={(value) => `${value}%`} onChange={setOverhead}/><Slider label="Potential variance to investigate" value={variance} min={0} max={10} step={0.5} format={(value) => `${value}%`} onChange={setVariance}/></section><section className="profit-output"><div className="profit-hero"><small>Operating contribution</small><b>{money(operatingContribution)}</b><span>{((operatingContribution / revenue) * 100).toFixed(1)}% of revenue · illustrative</span></div><div className="profit-breakdown"><ResultLine label="Revenue" value={money(revenue)}/><ResultLine label="Direct cost" value={`− ${money(direct)}`}/><ResultLine label="Labor" value={`− ${money(laborCost)}`}/><ResultLine label="Other overhead" value={`− ${money(overheadCost)}`}/><ResultLine label="Potential variance signal" value={money(possibleVariance)} warning/></div></section></div>
-    <DemoNotice text="This calculator demonstrates the product interaction only. It is not financial advice and does not estimate your real profit without verified business data." />
+    <SampleToolbar onReset={resetModel} />
+    <div className="profit-layout"><section className="profit-controls"><Slider label="Monthly revenue" value={revenue} min={200000} max={3000000} step={50000} format={(value) => `₹${Math.round(value / 1000)}k`} onChange={setField("revenue")}/><Slider label="Direct / food cost" value={directCost} min={10} max={60} step={1} format={(value) => `${value}%`} onChange={setField("directCost")}/><Slider label="Labor" value={labor} min={5} max={40} step={1} format={(value) => `${value}%`} onChange={setField("labor")}/><Slider label="Other operating overhead" value={overhead} min={5} max={45} step={1} format={(value) => `${value}%`} onChange={setField("overhead")}/><Slider label="Potential variance to investigate" value={variance} min={0} max={10} step={0.5} format={(value) => `${value}%`} onChange={setField("variance")}/></section><section className="profit-output"><div className="profit-hero"><small>Operating contribution</small><b>{money(operatingContribution)}</b><span>{((operatingContribution / revenue) * 100).toFixed(1)}% of revenue · illustrative</span></div><div className="profit-breakdown"><ResultLine label="Revenue" value={money(revenue)}/><ResultLine label="Direct cost" value={`− ${money(direct)}`}/><ResultLine label="Labor" value={`− ${money(laborCost)}`}/><ResultLine label="Other overhead" value={`− ${money(overheadCost)}`}/><ResultLine label="Potential variance signal" value={money(possibleVariance)} warning/></div></section></div>
+    <DemoNotice text="This calculator demonstrates the product interaction only. It is not financial advice and does not estimate your real profit without verified business data. Sample assumptions persist only in this browser." />
   </WorkspaceShell>;
 }
 
@@ -95,15 +105,16 @@ const initialGuests: GuestItem[] = [
 ];
 
 export function GuestsWorkspace() {
-  const [guests, setGuests] = useState(initialGuests);
+  const [guests, setGuests, resetGuests] = usePersistentSampleState("munaffa.sample.guests.v1", initialGuests);
   function resolve(id: number) { setGuests((current) => current.map((guest) => guest.id === id ? { ...guest, resolved: !guest.resolved } : guest)); }
   const open = guests.filter((guest) => !guest.resolved).length;
   const average = guests.reduce((sum, guest) => sum + guest.rating, 0) / guests.length;
 
   return <WorkspaceShell eyebrow="Guest intelligence" title="Turn feedback into service recovery." description="A sample feedback queue shows how guest sentiment can become an assigned action rather than a review that gets forgotten.">
     <div className="workspace-kpis"><Kpi label="Sample guests" value={String(guests.length)} /><Kpi label="Open recovery" value={String(open)} tone={open ? "warning" : undefined}/><Kpi label="Average rating" value={average.toFixed(1)} /><Kpi label="Resolved" value={String(guests.length - open)} /></div>
+    <SampleToolbar onReset={resetGuests} />
     <div className="guest-list">{guests.map((guest) => <article key={guest.id}><div className="guest-avatar"><Users size={17}/></div><div><small>{guest.source}</small><b>{guest.guest}</b><span>{guest.note}</span><em><Star size={12}/>{guest.rating}/5</em></div><button className={guest.resolved ? "resolved" : ""} onClick={() => resolve(guest.id)}>{guest.resolved ? "Resolved ✓" : "Resolve"}</button></article>)}</div>
-    <DemoNotice />
+    <DemoNotice text="Guest records on this screen are fictional sample data. Resolution changes persist only in this browser." />
   </WorkspaceShell>;
 }
 
@@ -136,6 +147,7 @@ export function AIWorkspace() {
 function WorkspaceShell({ eyebrow, title, description, children }: { eyebrow: string; title: string; description: string; children: React.ReactNode }) {
   return <div className="module-page interactive-workspace"><div className="module-heading"><ClipboardCheck size={24}/><div><span className="kicker">{eyebrow}</span><h2>{title}</h2><p>{description}</p></div></div>{children}</div>;
 }
+function SampleToolbar({ onReset }: { onReset: () => void }) { return <div className="sample-toolbar"><span>Sample state is saved on this device.</span><button type="button" onClick={onReset}><RefreshCw size={13}/> Reset sample</button></div>; }
 function Kpi({ label, value, tone, compact }: { label: string; value: string; tone?: "warning"; compact?: boolean }) { return <article className={tone === "warning" ? "workspace-kpi warning" : "workspace-kpi"}><small>{label}</small><b className={compact ? "compact" : ""}>{value}</b></article>; }
 function DemoNotice({ text = "All records on this screen are sample data and can be safely changed while exploring the product." }: { text?: string }) { return <div className="demo-notice"><CircleAlert size={15}/><span>{text}</span></div>; }
 function Slider({ label, value, min, max, step, format, onChange }: { label: string; value: number; min: number; max: number; step: number; format: (value: number) => string; onChange: (value: number) => void }) { return <label className="profit-slider"><span><b>{label}</b><em>{format(value)}</em></span><input type="range" min={min} max={max} step={step} value={value} onChange={(event) => onChange(Number(event.target.value))}/></label>; }
