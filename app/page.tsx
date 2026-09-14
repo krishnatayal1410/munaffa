@@ -1,7 +1,7 @@
 import { Nav } from "@/components/Nav";
 import { RestaurantWorld } from "@/components/RestaurantWorld";
 import { ExperienceController } from "@/components/ExperienceController";
-import { Story } from "@/components/Story";
+import { StoryLive } from "@/components/StoryLive";
 
 export default function Home() {
   return (
@@ -10,7 +10,7 @@ export default function Home() {
       <RestaurantWorld />
       <ExperienceController />
       <main className="relative z-10">
-        <Story />
+        <StoryLive />
       </main>
     </div>
   );
