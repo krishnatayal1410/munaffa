@@ -14,6 +14,7 @@ import { ProductionOverviewWorkspace } from "@/components/ProductionOverviewWork
 import { ProductionProfitWorkspace } from "@/components/ProductionProfitWorkspace";
 import { ProductionSignalPopover } from "@/components/ProductionSignalPopover";
 import { ProductionAIWorkspace } from "@/components/ProductionAIWorkspace";
+import { TeamWorkspace } from "@/components/TeamWorkspace";
 
 const navigation = [
   ["overview", "Overview", House],
@@ -22,6 +23,7 @@ const navigation = [
   ["profit", "Profit", CircleDollarSign],
   ["guests", "Guests", Users],
   ["ai", "Munaffa AI", Bot],
+  ["team", "Team", Users],
   ["settings", "Settings", Settings],
 ] as const;
 
@@ -44,6 +46,7 @@ const sectionModules: Record<string, string[]> = {
 
 function sectionIsEnabled(key: string, workspace: WorkspaceContext | null) {
   if (key === "overview" || key === "settings") return true;
+  if (key === "team") return Boolean(workspace?.organizationId && ["owner", "manager"].includes(workspace.authorizationRole));
   if (key === "profit" && workspace?.organizationId && !["owner", "manager", "cashier"].includes(workspace.authorizationRole)) return false;
   if (!workspace || workspace.enabledModules.length === 0) return true;
   return (sectionModules[key] || []).some((module) => workspace.enabledModules.includes(module));
@@ -110,6 +113,7 @@ export function DashboardApp({ section = "overview" }: { section?: string }) {
       {normalizedSection === "profit" && (mode === "supabase" && workspace ? <ProductionProfitWorkspace workspace={workspace}/> : <ProfitWorkspace />)}
       {normalizedSection === "guests" && (mode === "supabase" && workspace ? <ProductionGuestsWorkspace workspace={workspace}/> : <GuestsWorkspace />)}
       {normalizedSection === "ai" && (mode === "supabase" && workspace ? <ProductionAIWorkspace workspace={workspace}/> : <AIWorkspace />)}
+      {normalizedSection === "team" && mode === "supabase" && workspace && <TeamWorkspace workspace={workspace}/>} 
       {normalizedSection === "settings" && <SettingsView user={user} mode={mode} workspace={workspace} onUserChange={setUser} onWorkspaceChange={setWorkspace} />}
     </section>
 
