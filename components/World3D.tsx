@@ -142,19 +142,14 @@ function HotelStage() {
   });
   return <group ref={group}>
     <StageShell x={0} width={13} depth={10} accent="#e5a75a"/>
-    <group position={[0, 0, 0]}>
-      <AssetModel url={ASSET.sofa} position={[0, 0, -2.9]} rotation={[0, 0, 0]} scale={1.1}/>
-      <AssetModel url={ASSET.armchair} position={[-2.7, 0, -1.2]} rotation={[0, 0.45, 0]} scale={1.04}/>
-      <AssetModel url={ASSET.armchair} position={[2.7, 0, -1.2]} rotation={[0, -0.45, 0]} scale={1.04}/>
-      <AssetModel url={ASSET.coffee} position={[0, 0, -0.85]} rotation={[0, 0, 0]} scale={1.05}/>
-      <AssetModel url={ASSET.console} position={[4.25, 0, -3.6]} rotation={[0, -Math.PI / 2, 0]} scale={0.9}/>
-      <mesh position={[0, 2.7, -4.82]}>
-        <planeGeometry args={[5.7, 1.2]}/>
-        <meshBasicMaterial color="#bc8a50" transparent opacity={0.06}/>
-      </mesh>
-      <spotLight position={[-3, 5.5, 2]} target-position={[0, 0, -1]} intensity={52} angle={0.5} penumbra={0.8} color="#ffc77c" castShadow/>
-      <pointLight position={[3.5, 2.6, -1]} intensity={18} distance={8} color="#8effa2"/>
-    </group>
+    <AssetModel url={ASSET.sofa} position={[0, 0, -2.9]} scale={1.1}/>
+    <AssetModel url={ASSET.armchair} position={[-2.7, 0, -1.2]} rotation={[0, 0.45, 0]} scale={1.04}/>
+    <AssetModel url={ASSET.armchair} position={[2.7, 0, -1.2]} rotation={[0, -0.45, 0]} scale={1.04}/>
+    <AssetModel url={ASSET.coffee} position={[0, 0, -0.85]} scale={1.05}/>
+    <AssetModel url={ASSET.console} position={[4.25, 0, -3.6]} rotation={[0, -Math.PI / 2, 0]} scale={0.9}/>
+    <mesh position={[0, 2.7, -4.82]}><planeGeometry args={[5.7, 1.2]}/><meshBasicMaterial color="#bc8a50" transparent opacity={0.06}/></mesh>
+    <spotLight position={[-3, 5.5, 2]} intensity={52} angle={0.5} penumbra={0.8} color="#ffc77c" castShadow/>
+    <pointLight position={[3.5, 2.6, -1]} intensity={18} distance={8} color="#8effa2"/>
   </group>;
 }
 
@@ -166,14 +161,15 @@ function RestaurantStage() {
     const lift = scene === 1 ? Math.sin(localProgress * Math.PI) * 0.06 : 0;
     group.current.position.y = THREE.MathUtils.damp(group.current.position.y, lift, 2.5, delta);
   });
+  const pendants: V3[] = [[-2.5, 4.3, -1], [0, 4.4, -1.2], [2.5, 4.2, -1]];
   return <group ref={group} position={[18, 0, 0]}>
     <StageShell x={0} width={12} depth={9} accent="#a8f36a"/>
-    <AssetModel url={ASSET.roundTable} position={[0, 0, -0.8]} rotation={[0, 0, 0]} scale={1.08}/>
+    <AssetModel url={ASSET.roundTable} position={[0, 0, -0.8]} scale={1.08}/>
     <AssetModel url={ASSET.chair} position={[0, 0, 1.45]} rotation={[0, Math.PI, 0]} scale={0.95}/>
-    <AssetModel url={ASSET.chair} position={[0, 0, -3.15]} rotation={[0, 0, 0]} scale={0.95}/>
+    <AssetModel url={ASSET.chair} position={[0, 0, -3.15]} scale={0.95}/>
     <AssetModel url={ASSET.chair} position={[-2.25, 0, -0.8]} rotation={[0, Math.PI / 2, 0]} scale={0.95}/>
     <AssetModel url={ASSET.chair} position={[2.25, 0, -0.8]} rotation={[0, -Math.PI / 2, 0]} scale={0.95}/>
-    {[[-2.5, 4.3, -1], [0, 4.4, -1.2], [2.5, 4.2, -1]] as V3[]}.map((p, i) => <group key={i} position={p}>
+    {pendants.map((p, i) => <group key={i} position={p}>
       <mesh><cylinderGeometry args={[0.34, 0.45, 0.26, 40]}/><meshStandardMaterial color="#161510" metalness={0.75} roughness={0.25}/></mesh>
       <pointLight position={[0, -0.4, 0]} intensity={16} distance={6} color="#ffc36b"/>
     </group>)}
@@ -184,15 +180,11 @@ function RestaurantStage() {
 function KitchenStage() {
   return <group position={[36, 0, 0]}>
     <StageShell x={0} width={13} depth={10} accent="#e9a34c"/>
-    <AssetModel url={ASSET.shelf} position={[-4.3, 0, -3.8]} rotation={[0, 0, 0]} scale={1.1}/>
-    <AssetModel url={ASSET.shelf} position={[4.1, 0, -3.8]} rotation={[0, 0, 0]} scale={1.1}/>
-    <RoundedBox args={[6.5, 1.05, 1.9]} radius={0.08} smoothness={4} position={[0, 0.55, -1]} castShadow>
-      <meshStandardMaterial color="#303632" metalness={0.9} roughness={0.2}/>
-    </RoundedBox>
-    <RoundedBox args={[4.7, 0.22, 1.7]} radius={0.07} smoothness={4} position={[0, 1.2, -1]}>
-      <meshStandardMaterial color="#6f726d" metalness={0.92} roughness={0.16}/>
-    </RoundedBox>
-    <AssetModel url={ASSET.stool} position={[-2.6, 0, 1.2]} rotation={[0, 0.25, 0]} scale={1}/>
+    <AssetModel url={ASSET.shelf} position={[-4.3, 0, -3.8]} scale={1.1}/>
+    <AssetModel url={ASSET.shelf} position={[4.1, 0, -3.8]} scale={1.1}/>
+    <RoundedBox args={[6.5, 1.05, 1.9]} radius={0.08} smoothness={4} position={[0, 0.55, -1]} castShadow><meshStandardMaterial color="#303632" metalness={0.9} roughness={0.2}/></RoundedBox>
+    <RoundedBox args={[4.7, 0.22, 1.7]} radius={0.07} smoothness={4} position={[0, 1.2, -1]}><meshStandardMaterial color="#6f726d" metalness={0.92} roughness={0.16}/></RoundedBox>
+    <AssetModel url={ASSET.stool} position={[-2.6, 0, 1.2]} rotation={[0, 0.25, 0]}/>
     <IngredientCloud/>
     <spotLight position={[0, 5.4, 2.5]} intensity={55} angle={0.5} penumbra={0.78} color="#fff0d0" castShadow/>
     <pointLight position={[4.2, 2.4, -2]} intensity={20} distance={7} color="#e9a34c"/>
@@ -201,6 +193,7 @@ function KitchenStage() {
 
 function IngredientCloud() {
   const group = useRef<THREE.Group>(null);
+  const colors = ["#e9d4b0", "#d94f37", "#83ad58", "#f2d27d", "#b36f39", "#e7e1c8", "#8d3f28"];
   useFrame((state, delta) => {
     if (!group.current) return;
     const { scene, localProgress, reducedMotion } = useExperience.getState();
@@ -210,25 +203,21 @@ function IngredientCloud() {
     group.current.scale.setScalar(THREE.MathUtils.damp(group.current.scale.x, target, 3, delta));
     if (!reducedMotion) group.current.rotation.y += delta * 0.16;
   });
-  const colors = ["#e9d4b0", "#d94f37", "#83ad58", "#f2d27d", "#b36f39", "#e7e1c8", "#8d3f28"];
-  return <group ref={group} position={[0, 2.6, -0.6]}>
-    {colors.map((color, index) => {
-      const angle = (index / colors.length) * Math.PI * 2;
-      const r = 1.45 + (index % 2) * 0.45;
-      return <mesh key={color} position={[Math.cos(angle) * r, Math.sin(angle * 1.3) * 0.65, Math.sin(angle) * 0.85]}>
-        <icosahedronGeometry args={[0.18 + (index % 3) * 0.05, 2]}/>
-        <meshStandardMaterial color={color} roughness={0.4} metalness={0.06}/>
-      </mesh>;
-    })}
-  </group>;
+  return <group ref={group} position={[0, 2.6, -0.6]}>{colors.map((color, index) => {
+    const angle = (index / colors.length) * Math.PI * 2;
+    const r = 1.45 + (index % 2) * 0.45;
+    return <mesh key={color} position={[Math.cos(angle) * r, Math.sin(angle * 1.3) * 0.65, Math.sin(angle) * 0.85]}>
+      <icosahedronGeometry args={[0.18 + (index % 3) * 0.05, 2]}/><meshStandardMaterial color={color} roughness={0.4} metalness={0.06}/>
+    </mesh>;
+  })}</group>;
 }
 
 function InventoryStage() {
   return <group position={[54, 0, 0]}>
     <StageShell x={0} width={13} depth={10} accent="#73d990"/>
-    <AssetModel url={ASSET.shelf} position={[-3.7, 0, -3.7]} rotation={[0, 0, 0]} scale={1.18}/>
-    <AssetModel url={ASSET.shelf} position={[0, 0, -3.7]} rotation={[0, 0, 0]} scale={1.18}/>
-    <AssetModel url={ASSET.shelf} position={[3.7, 0, -3.7]} rotation={[0, 0, 0]} scale={1.18}/>
+    <AssetModel url={ASSET.shelf} position={[-3.7, 0, -3.7]} scale={1.18}/>
+    <AssetModel url={ASSET.shelf} position={[0, 0, -3.7]} scale={1.18}/>
+    <AssetModel url={ASSET.shelf} position={[3.7, 0, -3.7]} scale={1.18}/>
     <StockCrates/>
     <spotLight position={[-2, 5.4, 2.8]} intensity={46} angle={0.52} penumbra={0.8} color="#d9ffe2" castShadow/>
     <pointLight position={[4.6, 2.8, -1]} intensity={16} distance={8} color="#65ff89"/>
@@ -243,34 +232,28 @@ function StockCrates() {
     const warning = scene === 4 ? Math.sin(localProgress * Math.PI) : 0;
     group.current.rotation.y = THREE.MathUtils.damp(group.current.rotation.y, warning * -0.05, 2, delta);
   });
-  return <group ref={group}>
-    {Array.from({ length: 8 }).map((_, index) => {
-      const x = -3.4 + (index % 4) * 2.2;
-      const z = 0.4 + Math.floor(index / 4) * 1.7;
-      return <RoundedBox key={index} args={[1.35, 0.78, 1]} radius={0.08} smoothness={4} position={[x, 0.42, z]} castShadow>
-        <meshStandardMaterial color={index === 6 ? "#48211c" : "#242b26"} emissive={index === 6 ? "#ff594d" : "#17311f"} emissiveIntensity={index === 6 ? 0.7 : 0.18} roughness={0.52}/>
-      </RoundedBox>;
-    })}
-  </group>;
+  return <group ref={group}>{Array.from({ length: 8 }).map((_, index) => {
+    const x = -3.4 + (index % 4) * 2.2;
+    const z = 0.4 + Math.floor(index / 4) * 1.7;
+    return <RoundedBox key={index} args={[1.35, 0.78, 1]} radius={0.08} smoothness={4} position={[x, 0.42, z]} castShadow>
+      <meshStandardMaterial color={index === 6 ? "#48211c" : "#242b26"} emissive={index === 6 ? "#ff594d" : "#17311f"} emissiveIntensity={index === 6 ? 0.7 : 0.18} roughness={0.52}/>
+    </RoundedBox>;
+  })}</group>;
 }
 
 function CoreStage() {
   const root = useRef<THREE.Group>(null);
   const rings = useRef<Array<THREE.Mesh | null>>([]);
   const core = useRef<THREE.MeshStandardMaterial>(null);
-
   useFrame((state, delta) => {
     const { scene, localProgress, reducedMotion } = useExperience.getState();
     if (root.current && !reducedMotion) root.current.rotation.y += delta * (scene >= 5 ? 0.18 : 0.05);
     const leak = scene === 5 ? Math.sin(localProgress * Math.PI) : 0;
-    const assembled = scene >= 6 ? 1 : 0.78;
-    if (root.current) root.current.scale.setScalar(THREE.MathUtils.damp(root.current.scale.x, assembled, 2.8, delta));
+    if (root.current) root.current.scale.setScalar(THREE.MathUtils.damp(root.current.scale.x, scene >= 6 ? 1 : 0.78, 2.8, delta));
     rings.current.forEach((ring, index) => {
       if (!ring) return;
-      const targetX = leak * (index - 1.5) * 0.42;
-      const targetY = leak * Math.sin(index * 1.8) * 0.45;
-      ring.position.x = THREE.MathUtils.damp(ring.position.x, targetX, 3, delta);
-      ring.position.y = THREE.MathUtils.damp(ring.position.y, targetY, 3, delta);
+      ring.position.x = THREE.MathUtils.damp(ring.position.x, leak * (index - 1.5) * 0.42, 3, delta);
+      ring.position.y = THREE.MathUtils.damp(ring.position.y, leak * Math.sin(index * 1.8) * 0.45, 3, delta);
       if (!reducedMotion) ring.rotation.z += delta * (0.08 + index * 0.03) * (index % 2 ? 1 : -1);
     });
     if (core.current) {
@@ -280,19 +263,11 @@ function CoreStage() {
       core.current.emissiveIntensity = danger ? 2.4 : 1.65;
     }
   });
-
   return <group position={[72, 1.45, 0]} ref={root}>
-    <mesh>
-      <sphereGeometry args={[1.55, 96, 96]}/>
-      <meshPhysicalMaterial color="#0b120e" transmission={0.72} thickness={2.2} roughness={0.09} metalness={0.18} clearcoat={1} clearcoatRoughness={0.08}/>
-    </mesh>
-    <mesh>
-      <icosahedronGeometry args={[0.68, 5]}/>
-      <meshStandardMaterial ref={core} color="#143d21" emissive="#74ff8f" emissiveIntensity={1.65} metalness={0.32} roughness={0.14}/>
-    </mesh>
+    <mesh><sphereGeometry args={[1.55, 96, 96]}/><meshPhysicalMaterial color="#0b120e" transmission={0.72} thickness={2.2} roughness={0.09} metalness={0.18} clearcoat={1} clearcoatRoughness={0.08}/></mesh>
+    <mesh><icosahedronGeometry args={[0.68, 5]}/><meshStandardMaterial ref={core} color="#143d21" emissive="#74ff8f" emissiveIntensity={1.65} metalness={0.32} roughness={0.14}/></mesh>
     {[1.95, 2.45, 2.95, 3.5].map((radius, index) => <mesh key={radius} ref={(node) => { rings.current[index] = node; }} rotation={[index * 0.72, index * 0.46, index * 0.58]}>
-      <torusGeometry args={[radius, 0.025 + index * 0.006, 16, 180]}/>
-      <meshStandardMaterial color={index === 2 ? "#e9a34c" : "#a8f36a"} emissive={index === 2 ? "#e9a34c" : "#62ff83"} emissiveIntensity={1.15} metalness={0.55} roughness={0.2} transparent opacity={0.68 - index * 0.08}/>
+      <torusGeometry args={[radius, 0.025 + index * 0.006, 16, 180]}/><meshStandardMaterial color={index === 2 ? "#e9a34c" : "#a8f36a"} emissive={index === 2 ? "#e9a34c" : "#62ff83"} emissiveIntensity={1.15} metalness={0.55} roughness={0.2} transparent opacity={0.68 - index * 0.08}/>
     </mesh>)}
     <pointLight intensity={38} distance={11} color="#6dff8a"/>
     <Sparkles count={70} scale={[8, 8, 8]} speed={0.12} size={1.05} opacity={0.34} color="#a8f36a"/>
@@ -309,13 +284,10 @@ function OrderToken() {
     ref.current.position.set(18 + smooth * 18, 2.4 + Math.sin(smooth * Math.PI) * 1.7, 0.3 - smooth * 0.7);
     ref.current.rotation.y = -0.45 + smooth * 0.9;
     if (!reducedMotion) ref.current.rotation.z = Math.sin(state.clock.elapsedTime * 1.3) * 0.05;
-    const visible = progress > 0.1 && progress < 0.48;
-    ref.current.scale.setScalar(visible ? 1 : 0.001);
+    ref.current.scale.setScalar(progress > 0.1 && progress < 0.48 ? 1 : 0.001);
   });
   return <group ref={ref}>
-    <RoundedBox args={[1.15, 0.72, 0.08]} radius={0.08} smoothness={5}>
-      <meshStandardMaterial color="#0f1c13" emissive="#65ff89" emissiveIntensity={0.75} metalness={0.4} roughness={0.22}/>
-    </RoundedBox>
+    <RoundedBox args={[1.15, 0.72, 0.08]} radius={0.08} smoothness={5}><meshStandardMaterial color="#0f1c13" emissive="#65ff89" emissiveIntensity={0.75} metalness={0.4} roughness={0.22}/></RoundedBox>
     <mesh position={[0, 0, 0.055]}><planeGeometry args={[0.62, 0.055]}/><meshBasicMaterial color="#c8ffac"/></mesh>
     <mesh position={[0, -0.14, 0.055]}><planeGeometry args={[0.82, 0.035]}/><meshBasicMaterial color="#7a9e7f"/></mesh>
   </group>;
@@ -323,34 +295,20 @@ function OrderToken() {
 
 function DataPath() {
   const curve = useMemo(() => new THREE.CatmullRomCurve3([
-    new THREE.Vector3(18, 1.1, 0.8),
-    new THREE.Vector3(27, 1.8, -1),
-    new THREE.Vector3(36, 1.25, -0.2),
-    new THREE.Vector3(45, 1.65, 0.7),
-    new THREE.Vector3(54, 1.15, 0),
-    new THREE.Vector3(63, 1.8, -0.7),
-    new THREE.Vector3(72, 1.45, 0)
+    new THREE.Vector3(18, 1.1, 0.8), new THREE.Vector3(27, 1.8, -1), new THREE.Vector3(36, 1.25, -0.2), new THREE.Vector3(45, 1.65, 0.7), new THREE.Vector3(54, 1.15, 0), new THREE.Vector3(63, 1.8, -0.7), new THREE.Vector3(72, 1.45, 0)
   ], false, "catmullrom", 0.32), []);
   const points = useMemo(() => curve.getPoints(90).map((p) => [p.x, p.y, p.z] as V3), [curve]);
   const pulses = useRef<Array<THREE.Mesh | null>>([]);
-
   useFrame((state) => {
-    const scene = useExperience.getState().scene;
     pulses.current.forEach((node, index) => {
       if (!node) return;
-      const speed = scene === 5 ? 0.035 : 0.06;
-      const t = (state.clock.elapsedTime * speed + index / 11) % 1;
-      const p = curve.getPointAt(t);
-      node.position.copy(p);
+      const t = (state.clock.elapsedTime * (useExperience.getState().scene === 5 ? 0.035 : 0.06) + index / 11) % 1;
+      node.position.copy(curve.getPointAt(t));
     });
   });
-
   return <group>
     <Line points={points} color="#76ff93" transparent opacity={0.24} lineWidth={0.6}/>
-    {Array.from({ length: 11 }).map((_, index) => <mesh key={index} ref={(node) => { pulses.current[index] = node; }}>
-      <sphereGeometry args={[0.045, 14, 14]}/>
-      <meshBasicMaterial color={index % 4 === 0 ? "#e9a34c" : "#9bffad"}/>
-    </mesh>)}
+    {Array.from({ length: 11 }).map((_, index) => <mesh key={index} ref={(node) => { pulses.current[index] = node; }}><sphereGeometry args={[0.045, 14, 14]}/><meshBasicMaterial color={index % 4 === 0 ? "#e9a34c" : "#9bffad"}/></mesh>)}
   </group>;
 }
 
