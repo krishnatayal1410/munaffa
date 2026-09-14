@@ -69,6 +69,12 @@ export function DashboardApp({ section = "overview" }: { section?: string }) {
     return () => { cancelled = true; };
   }, [mode, router]);
 
+  useEffect(() => {
+    if (loading || !workspace) return;
+    const knownSection = navigation.some(([key]) => key === section);
+    if (!knownSection || !sectionIsEnabled(section, workspace)) router.replace("/app");
+  }, [loading, router, section, workspace]);
+
   if (loading || !user) return <div className="app-loading">Opening Munaffa workspace…</div>;
 
   async function signOut() {
@@ -89,7 +95,7 @@ export function DashboardApp({ section = "overview" }: { section?: string }) {
     </aside>
 
     <section className="dashboard-main">
-      <header className="dashboard-topbar"><button className="mobile-dashboard-menu" onClick={() => setMenu((value) => !value)} aria-label="Toggle workspace navigation">{menu ? <X/> : <Menu/>}</button><div><small>{mode === "supabase" ? "Production account" : "Guided sample workspace"}</small><h1>{sectionTitle}</h1></div><div className="top-actions"><div className="notification-wrap"><button aria-label="Notifications" aria-expanded={notificationsOpen} onClick={() => setNotificationsOpen((open) => !open)}><Bell size={17}/><i className="notification-dot" /></button>{notificationsOpen && <NotificationPopover mode={mode} onClose={() => setNotificationsOpen(false)} />}</div><span>{user.name.slice(0, 1).toUpperCase()}</span></div></header>
+      <header className="dashboard-topbar"><button className="mobile-dashboard-menu" onClick={() => setMenu((value) => !value)} aria-label="Toggle workspace navigation">{menu ? <X/> : <Menu/>}</button><div><small>{mode === "supabase" ? "Production account" : "Guided sample workspace"}</small><h1>{sectionTitle}</h1></div><div className="top-actions"><div className="notification-wrap"><button aria-label="Notifications" aria-expanded={notificationsOpen} onClick={() => setNotificationsOpen((open) => !open)}><Bell size={17}/><i className="notification-dot" /></button>{notificationsOpen && <NotificationPopover mode={mode} workspace={workspace} onClose={() => setNotificationsOpen(false)} />}</div><span>{user.name.slice(0, 1).toUpperCase()}</span></div></header>
       {normalizedSection === "overview" && <Overview mode={mode} workspace={workspace} />}
       {normalizedSection === "operations" && <OperationsWorkspace />}
       {normalizedSection === "inventory" && <InventoryWorkspace />}
@@ -103,13 +109,14 @@ export function DashboardApp({ section = "overview" }: { section?: string }) {
   </main>;
 }
 
-function NotificationPopover({ mode, onClose }: { mode: "supabase" | "demo"; onClose: () => void }) {
+function NotificationPopover({ mode, workspace, onClose }: { mode: "supabase" | "demo"; workspace: WorkspaceContext | null; onClose: () => void }) {
   const items = [
     ["Inventory variance needs review", "Compare theoretical and physical count before assigning a cause."],
     ["Service queue has high-priority work", "Two sample tasks are marked high priority and not complete."],
     ["Supplier cost signal moved", "Illustrative purchase-cost movement should be checked against recent invoices."],
   ];
-  return <div className="notification-popover" role="dialog" aria-label="Notifications"><header><div><small>{mode === "supabase" ? "Workspace signals" : "Sample signals"}</small><b>Needs attention</b></div><button type="button" aria-label="Close notifications" onClick={onClose}>×</button></header>{items.map(([title, copy], index) => <article key={title}><i className={index === 0 ? "danger-dot" : "warn-dot"}/><div><b>{title}</b><span>{copy}</span><em>Illustrative</em></div></article>)}<Link href="/app/operations" onClick={onClose}>Open workspace →</Link></div>;
+  const target = sectionIsEnabled("operations", workspace) ? "/app/operations" : sectionIsEnabled("inventory", workspace) ? "/app/inventory" : sectionIsEnabled("profit", workspace) ? "/app/profit" : "/app";
+  return <div className="notification-popover" role="dialog" aria-label="Notifications"><header><div><small>{mode === "supabase" ? "Workspace signals" : "Sample signals"}</small><b>Needs attention</b></div><button type="button" aria-label="Close notifications" onClick={onClose}>×</button></header>{items.map(([title, copy], index) => <article key={title}><i className={index === 0 ? "danger-dot" : "warn-dot"}/><div><b>{title}</b><span>{copy}</span><em>Illustrative</em></div></article>)}<Link href={target} onClick={onClose}>Open workspace →</Link></div>;
 }
 
 function Overview({ mode, workspace }: { mode: "supabase" | "demo"; workspace: WorkspaceContext | null }) {
