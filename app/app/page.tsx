@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { DemoSyncBridge } from "@/components/DemoSyncBridge";
 import { WorkspaceApp } from "@/components/WorkspaceApp";
 
 export const metadata: Metadata = {
@@ -6,4 +7,4 @@ export const metadata: Metadata = {
   description: "Interactive hospitality operations and profit workspace demo for Munaffa."
 };
 
-export default function WorkspacePage(){return <WorkspaceApp/>}
+export default function WorkspacePage(){return <><DemoSyncBridge/><WorkspaceApp/></>}
