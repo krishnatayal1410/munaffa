@@ -15,8 +15,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const marketing = marketingPages[slug];
   const legal = legalPages[slug];
-  if (marketing) return { title: `${marketing.title} | Munaffa`, description: marketing.copy };
-  if (legal) return { title: `${legal.title} | Munaffa`, description: legal.intro };
+  if (marketing) return { title: marketing.title, description: marketing.copy, alternates: { canonical: `/${slug}` } };
+  if (legal) return { title: legal.title, description: legal.intro, alternates: { canonical: `/${slug}` }, robots: { index: slug === "privacy" || slug === "terms", follow: true } };
   return {};
 }
 
