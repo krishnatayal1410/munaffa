@@ -6,6 +6,7 @@ import { industries } from "@/lib/content";
 import { HospitalityWorld } from "./HospitalityWorld";
 import { ExperienceController } from "./ExperienceController";
 import { StoryProgress } from "./StoryProgress";
+import { WorldLoader } from "./WorldLoader";
 import { useExperience } from "@/lib/experience";
 
 const painCards = [
@@ -21,6 +22,7 @@ export function ImmersiveHome() {
 
   return <>
     <HospitalityWorld />
+    <WorldLoader />
     <ExperienceController />
     <StoryProgress />
     <div className="world-vignette" />
