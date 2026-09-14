@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Bell, Bot, Boxes, Building2, ChartNoAxesCombined, CircleDollarSign, House, LogOut, Menu, PackageSearch, Settings, Users, X } from "lucide-react";
-import { useEffect, useState } from "react";
-import type { DemoUser } from "@/lib/domain";
-import { backendMode, getCurrentUser, loadWorkspaceContext, signOutCurrentUser, updateWorkspaceProfile, type WorkspaceContext } from "@/lib/workspaceBackend";
+import { useEffect, useMemo, useState } from "react";
+import type { DemoUser, Role } from "@/lib/domain";
+import { backendMode, getCurrentUser, loadWorkspaceContext, saveWorkspaceSetup, signOutCurrentUser, updateWorkspaceProfile, type WorkspaceContext } from "@/lib/workspaceBackend";
 import { AIWorkspace, GuestsWorkspace, InventoryWorkspace, OperationsWorkspace, ProfitWorkspace } from "@/components/ProductWorkspace";
 
 const navigation = [
@@ -24,6 +24,9 @@ const demoMetrics = [
   ["Contribution", "₹2,18,640", "+3.1%"],
   ["Potential variance", "Review", "6 signals"],
 ];
+
+const workspaceRoles: Role[] = ["owner", "manager", "front-desk", "cashier", "waiter", "kitchen", "inventory"];
+const moduleOptions = ["Revenue & analytics", "Orders / bookings", "Inventory & cost", "Kitchen / service operations", "Guests & CRM", "AI insights"];
 
 export function DashboardApp({ section = "overview" }: { section?: string }) {
   const router = useRouter();
@@ -78,7 +81,7 @@ export function DashboardApp({ section = "overview" }: { section?: string }) {
       {normalizedSection === "profit" && <ProfitWorkspace />}
       {normalizedSection === "guests" && <GuestsWorkspace />}
       {normalizedSection === "ai" && <AIWorkspace />}
-      {normalizedSection === "settings" && <SettingsView user={user} mode={mode} onUserChange={setUser} />}
+      {normalizedSection === "settings" && <SettingsView user={user} mode={mode} workspace={workspace} onUserChange={setUser} onWorkspaceChange={setWorkspace} />}
     </section>
 
     {tourStep >= 0 && <Tutorial step={tourStep} onNext={() => setTourStep((current) => current >= 3 ? -1 : current + 1)} onClose={() => setTourStep(-1)} />}
@@ -89,33 +92,81 @@ function Overview({ mode }: { mode: "supabase" | "demo" }) {
   return <div className="dashboard-content"><div className="welcome-row"><div><span className="kicker">{mode === "supabase" ? "Connected account" : "Interactive sample"}</span><h2>See the whole business before it becomes a problem.</h2><p>{mode === "supabase" ? "Your account and workspace setup are persisted. The operational values remain illustrative until POS, PMS, inventory and payment sources are connected." : "Use the left navigation to change service status, recount inventory, model contribution, resolve guest feedback and ask the sample Munaffa AI."}</p></div><Link href="/app/operations" className="pill primary">Explore live sample</Link></div><div className="metric-row">{demoMetrics.map(([label,value,change]) => <article key={label}><small>{label}</small><b>{value}</b><em>{change} · Illustrative</em></article>)}</div><div className="dashboard-grid"><article className="chart-card"><header><div><small>Revenue + contribution</small><b>Last 7 days · Illustrative</b></div><ChartNoAxesCombined size={18}/></header><div className="fake-chart">{[32,52,41,66,58,78,88,71,91,76,95,86].map((height,index)=><i key={index} style={{height:`${height}%`}} />)}</div></article><article className="attention-card"><header><PackageSearch size={18}/><div><small>Needs attention</small><b>Operational signals</b></div></header>{["High-volume ingredient variance", "Weekend demand above baseline", "Three service requests delayed", "Supplier cost increased"].map((signal,index)=><div key={signal}><span className={index===0?"danger-dot":"warn-dot"}/><b>{signal}</b><small>Illustrative signal</small></div>)}</article></div><div className="overview-next"><Link href="/app/operations"><Building2 size={18}/><span><b>Operate the sample</b><small>Advance rooms, orders and guest-service work.</small></span>→</Link><Link href="/app/inventory"><Boxes size={18}/><span><b>Recount inventory</b><small>See theoretical-vs-physical variance change.</small></span>→</Link><Link href="/app/profit"><CircleDollarSign size={18}/><span><b>Model contribution</b><small>Change revenue and cost assumptions interactively.</small></span>→</Link></div></div>;
 }
 
-function SettingsView({ user, mode, onUserChange }: { user: DemoUser; mode: "supabase" | "demo"; onUserChange: (user: DemoUser) => void }) {
+function SettingsView({ user, mode, workspace, onUserChange, onWorkspaceChange }: { user: DemoUser; mode: "supabase" | "demo"; workspace: WorkspaceContext | null; onUserChange: (user: DemoUser) => void; onWorkspaceChange: (workspace: WorkspaceContext | null) => void }) {
   const [name, setName] = useState(user.name);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState("");
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileSaved, setProfileSaved] = useState(false);
+  const [profileError, setProfileError] = useState("");
+  const [organizationName, setOrganizationName] = useState(workspace?.organizationName || "");
+  const [propertyName, setPropertyName] = useState(workspace?.propertyName || "");
+  const [city, setCity] = useState(workspace?.city || "");
+  const [role, setRole] = useState<Role>(workspace?.role || "owner");
+  const [enabledModules, setEnabledModules] = useState<string[]>(workspace?.enabledModules || []);
+  const [workspaceSaving, setWorkspaceSaving] = useState(false);
+  const [workspaceSaved, setWorkspaceSaved] = useState(false);
+  const [workspaceError, setWorkspaceError] = useState("");
 
   useEffect(() => setName(user.name), [user.name]);
+  useEffect(() => {
+    if (!workspace) return;
+    setOrganizationName(workspace.organizationName);
+    setPropertyName(workspace.propertyName);
+    setCity(workspace.city);
+    setRole(workspace.role);
+    setEnabledModules(workspace.enabledModules);
+  }, [workspace]);
 
   async function saveProfile() {
-    setSaving(true);
-    setSaved(false);
-    setError("");
+    setProfileSaving(true);
+    setProfileSaved(false);
+    setProfileError("");
     try {
       const result = await updateWorkspaceProfile({ name });
       onUserChange(result.user);
-      setSaved(true);
-      window.setTimeout(() => setSaved(false), 2400);
+      setProfileSaved(true);
+      window.setTimeout(() => setProfileSaved(false), 2400);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not save your profile.");
+      setProfileError(cause instanceof Error ? cause.message : "Could not save your profile.");
     } finally {
-      setSaving(false);
+      setProfileSaving(false);
     }
   }
 
-  const unchanged = name.trim() === user.name.trim();
+  async function saveWorkspace() {
+    if (!workspace) return;
+    setWorkspaceSaving(true);
+    setWorkspaceSaved(false);
+    setWorkspaceError("");
+    try {
+      await saveWorkspaceSetup({
+        organizationName: organizationName.trim(),
+        hospitalityType: workspace.hospitalityType,
+        role,
+        propertyName: propertyName.trim(),
+        city: city.trim(),
+        enabledModules,
+      });
+      const refreshed = await loadWorkspaceContext();
+      onWorkspaceChange(refreshed ?? { ...workspace, organizationName: organizationName.trim(), propertyName: propertyName.trim(), city: city.trim(), role, enabledModules });
+      setWorkspaceSaved(true);
+      window.setTimeout(() => setWorkspaceSaved(false), 2400);
+    } catch (cause) {
+      setWorkspaceError(cause instanceof Error ? cause.message : "Could not save workspace settings.");
+    } finally {
+      setWorkspaceSaving(false);
+    }
+  }
 
-  return <div className="module-page"><div className="module-heading"><Settings size={24}/><div><span className="kicker">Workspace configuration</span><h2>Settings</h2><p>{mode === "supabase" ? "Manage the identity attached to your production workspace." : "Try profile changes safely in the local sample workspace."}</p></div></div><div className="settings-card"><label>Name<input value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" maxLength={80}/></label><label>Email<input value={user.email} readOnly aria-readonly="true"/></label><small>{mode === "supabase" ? "Your display name is saved to Supabase Auth and your protected user profile. Email changes remain in the authentication flow so confirmation and account security are not bypassed." : "Sample name changes are stored only in this browser. The sample email is intentionally read-only."}</small><button className="pill primary" disabled={saving || unchanged || name.trim().length < 2} onClick={() => void saveProfile()}>{saving ? "Saving…" : mode === "supabase" ? "Save profile" : "Save sample profile"}</button>{saved && <div className="form-success">Profile updated.</div>}{error && <div className="form-error" role="alert">{error}</div>}</div></div>;
+  const profileUnchanged = name.trim() === user.name.trim();
+  const canManageBusiness = mode === "demo" || workspace?.authorizationRole === "owner";
+  const workspaceValid = organizationName.trim().length > 1 && propertyName.trim().length > 1 && city.trim().length > 1;
+  const workspaceChanged = useMemo(() => {
+    if (!workspace) return false;
+    const sameModules = [...enabledModules].sort().join("|") === [...workspace.enabledModules].sort().join("|");
+    return organizationName.trim() !== workspace.organizationName || propertyName.trim() !== workspace.propertyName || city.trim() !== workspace.city || role !== workspace.role || !sameModules;
+  }, [city, enabledModules, organizationName, propertyName, role, workspace]);
+
+  return <div className="module-page"><div className="module-heading"><Settings size={24}/><div><span className="kicker">Workspace configuration</span><h2>Settings</h2><p>{mode === "supabase" ? "Manage your account identity, operating role and authorized workspace settings." : "Try account and workspace changes safely in this browser-only sample."}</p></div></div><div className="settings-layout"><section className="settings-card"><div className="settings-card-head"><div><small>Account</small><h3>Your profile</h3></div><span>{mode === "supabase" ? "Supabase" : "Local sample"}</span></div><label>Name<input value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" maxLength={80}/></label><label>Email<input value={user.email} readOnly aria-readonly="true"/></label><small>{mode === "supabase" ? "Your display name is saved to Supabase Auth and your protected profile. Email changes stay inside the authentication flow so account confirmation is not bypassed." : "Sample name changes are stored only in this browser. The sample email is intentionally read-only."}</small><button className="pill primary" disabled={profileSaving || profileUnchanged || name.trim().length < 2} onClick={() => void saveProfile()}>{profileSaving ? "Saving…" : "Save profile"}</button>{profileSaved && <div className="form-success">Profile updated.</div>}{profileError && <div className="form-error" role="alert">{profileError}</div>}</section>{workspace && <section className="settings-card"><div className="settings-card-head"><div><small>Workspace</small><h3>Business configuration</h3></div><span>{workspace.authorizationRole}</span></div><div className="settings-two"><label>Business name<input value={organizationName} disabled={!canManageBusiness} onChange={(event) => setOrganizationName(event.target.value)} maxLength={120}/></label><label>Property / outlet<input value={propertyName} disabled={!canManageBusiness} onChange={(event) => setPropertyName(event.target.value)} maxLength={120}/></label></div><label>City<input value={city} disabled={!canManageBusiness} onChange={(event) => setCity(event.target.value)} maxLength={120}/></label><label>Preferred operating role<select value={role} onChange={(event) => setRole(event.target.value as Role)}>{workspaceRoles.map((item) => <option key={item} value={item}>{item.replace("-", " ")}</option>)}</select></label><div className="settings-modules"><small>Enabled modules</small>{moduleOptions.map((item) => { const active = enabledModules.includes(item); return <button key={item} type="button" disabled={!canManageBusiness} className={active ? "active" : ""} onClick={() => setEnabledModules((current) => active ? current.filter((value) => value !== item) : [...current, item])}><span>{active ? "✓" : "+"}</span>{item}</button>; })}</div>{!canManageBusiness && <div className="settings-lock">Your authorization role is <b>{workspace.authorizationRole}</b>. You can change your preferred operating role, but only the organization owner can rename the business, property, city or enabled modules.</div>}<button className="pill primary" disabled={workspaceSaving || !workspaceChanged || !workspaceValid} onClick={() => void saveWorkspace()}>{workspaceSaving ? "Saving…" : "Save workspace"}</button>{workspaceSaved && <div className="form-success">Workspace settings updated.</div>}{workspaceError && <div className="form-error" role="alert">{workspaceError}</div>}</section>}</div></div>;
 }
 
 function Tutorial({step,onNext,onClose}:{step:number;onNext:()=>void;onClose:()=>void}) {
