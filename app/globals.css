@@ -3,6 +3,7 @@
 @import "./styles/marketing.css";
 @import "./styles/auth.css";
 @import "./styles/dashboard.css";
+@import "./styles/workspace.css";
 @import "./styles/responsive.css";
 
 @tailwind base;
