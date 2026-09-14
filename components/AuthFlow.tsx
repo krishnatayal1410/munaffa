@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { z } from "zod";
 import { writeDemoProfile } from "@/lib/demoWorkspace";
@@ -15,6 +15,11 @@ const passwordSchema = z.string().min(8, "Password must be at least 8 characters
 const signInSchema = z.object({ email: emailSchema, password: passwordSchema });
 const signUpSchema = signInSchema.extend({ name: z.string().min(2, "Enter your name") });
 
+function safeRelativeNext(value: string | null) {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) return "";
+  return value;
+}
+
 export function AuthFlow({ mode }: { mode: AuthMode }) {
   const router = useRouter();
   const production = hasProductionBackend();
@@ -24,13 +29,20 @@ export function AuthFlow({ mode }: { mode: AuthMode }) {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [nextPath, setNextPath] = useState("");
+
+  useEffect(() => {
+    setNextPath(safeRelativeNext(new URLSearchParams(window.location.search).get("next")));
+  }, []);
 
   const title = useMemo(() => {
-    if (mode === "sign-up") return "Create your Munaffa workspace";
+    if (mode === "sign-up") return nextPath.startsWith("/invite/") ? "Create an account to join" : "Create your Munaffa workspace";
     if (mode === "sign-in") return "Welcome back";
     if (mode === "update-password") return "Choose a new password";
     return "Reset your password";
-  }, [mode]);
+  }, [mode, nextPath]);
+
+  const nextQuery = nextPath ? `?next=${encodeURIComponent(nextPath)}` : "";
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -87,27 +99,30 @@ export function AuthFlow({ mode }: { mode: AuthMode }) {
       }
 
       if (mode === "sign-up") {
+        const returnAfterConfirmation = nextPath
+          ? `${window.location.origin}/auth/sign-in?next=${encodeURIComponent(nextPath)}`
+          : `${window.location.origin}/auth/sign-in`;
         const { data, error: signUpError } = await client.auth.signUp({
           email,
           password,
           options: {
             data: { full_name: name },
-            emailRedirectTo: `${window.location.origin}/auth/sign-in`,
+            emailRedirectTo: returnAfterConfirmation,
           },
         });
         if (signUpError) throw signUpError;
 
         if (data.session) {
-          router.push("/onboarding");
+          router.push(nextPath || "/onboarding");
         } else {
-          setMessage("Account created. Check your email to confirm your address, then sign in to finish setup.");
+          setMessage(nextPath ? "Account created. Confirm your email, sign in, and you’ll return to the secure invitation." : "Account created. Check your email to confirm your address, then sign in to finish setup.");
         }
         return;
       }
 
       const { error: signInError } = await client.auth.signInWithPassword({ email, password });
       if (signInError) throw signInError;
-      router.push("/app");
+      router.push(nextPath || "/app");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Something went wrong. Please try again.");
     } finally {
@@ -117,8 +132,8 @@ export function AuthFlow({ mode }: { mode: AuthMode }) {
 
   const showEmail = mode !== "update-password";
   const showPassword = mode !== "forgot-password";
-  const kicker = mode === "sign-up" ? "Start free" : mode === "sign-in" ? "Secure workspace" : mode === "update-password" ? "Account security" : "Account recovery";
-  const submitLabel = loading ? "Please wait…" : mode === "sign-up" ? "Create workspace" : mode === "sign-in" ? "Sign in" : mode === "update-password" ? "Update password" : "Send reset link";
+  const kicker = mode === "sign-up" ? nextPath.startsWith("/invite/") ? "Team invitation" : "Start free" : mode === "sign-in" ? "Secure workspace" : mode === "update-password" ? "Account security" : "Account recovery";
+  const submitLabel = loading ? "Please wait…" : mode === "sign-up" ? nextPath.startsWith("/invite/") ? "Create account" : "Create workspace" : mode === "sign-in" ? "Sign in" : mode === "update-password" ? "Update password" : "Send reset link";
 
   return <main className="auth-page">
     <section className="auth-art">
@@ -129,7 +144,7 @@ export function AuthFlow({ mode }: { mode: AuthMode }) {
     <section className="auth-panel"><div className="auth-box">
       <span className="kicker">{kicker}</span>
       <h2>{title}</h2>
-      <p className="auth-sub">{production ? "Production authentication is enabled for this deployment." : "Demo mode is active. Add the Supabase environment variables to switch this exact flow to secure production accounts."}</p>
+      <p className="auth-sub">{production ? nextPath.startsWith("/invite/") ? "Authenticate first. The invitation is accepted only after you return to the secure invite page and confirm it." : "Production authentication is enabled for this deployment." : "Demo mode is active. Add the Supabase environment variables to switch this exact flow to secure production accounts."}</p>
       <form onSubmit={submit} className="auth-form">
         {mode === "sign-up" && <label>Full name<input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" autoComplete="name" /></label>}
         {showEmail && <label>Email<input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@business.com" type="email" autoComplete="email" /></label>}
@@ -139,8 +154,8 @@ export function AuthFlow({ mode }: { mode: AuthMode }) {
         <button className="pill primary full-width" type="submit" disabled={loading}>{submitLabel}</button>
       </form>
       <div className="auth-links">
-        {mode === "sign-in" && <><Link href="/auth/forgot-password">Forgot password?</Link><span>New to Munaffa? <Link href="/auth/sign-up">Create account</Link></span></>}
-        {mode === "sign-up" && <span>Already have an account? <Link href="/auth/sign-in">Sign in</Link></span>}
+        {mode === "sign-in" && <><Link href="/auth/forgot-password">Forgot password?</Link><span>New to Munaffa? <Link href={`/auth/sign-up${nextQuery}`}>Create account</Link></span></>}
+        {mode === "sign-up" && <span>Already have an account? <Link href={`/auth/sign-in${nextQuery}`}>Sign in</Link></span>}
         {(mode === "forgot-password" || mode === "update-password") && <Link href="/auth/sign-in">Back to sign in</Link>}
       </div>
     </div></section>
