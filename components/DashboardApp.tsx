@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bell, Bot, Boxes, Building2, ChartNoAxesCombined, CircleDollarSign, House, LogOut, Menu, PackageSearch, Settings, Users, X } from "lucide-react";
+import { Bell, Bot, Boxes, Building2, ChartNoAxesCombined, CircleDollarSign, House, LogOut, Menu, PackageSearch, Settings, Users, UtensilsCrossed, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { DemoUser, Role } from "@/lib/domain";
 import { backendMode, getCurrentUser, loadWorkspaceContext, saveWorkspaceConfiguration, signOutCurrentUser, updateWorkspaceProfile, type WorkspaceContext } from "@/lib/workspaceBackend";
@@ -14,6 +14,7 @@ import { ProductionOverviewWorkspace } from "@/components/ProductionOverviewWork
 import { ProductionProfitWorkspace } from "@/components/ProductionProfitWorkspace";
 import { ProductionSignalPopover } from "@/components/ProductionSignalPopover";
 import { ProductionAIWorkspace } from "@/components/ProductionAIWorkspace";
+import { ProductionFoodServiceWorkspace } from "@/components/ProductionFoodServiceWorkspace";
 import { TeamWorkspace } from "@/components/TeamWorkspace";
 import { LocationsWorkspace } from "@/components/LocationsWorkspace";
 
@@ -21,6 +22,7 @@ const navigation = [
   ["overview", "Overview", House],
   ["locations", "Locations", Building2],
   ["operations", "Operations", Building2],
+  ["food", "Menu & Orders", UtensilsCrossed],
   ["inventory", "Inventory", Boxes],
   ["profit", "Profit", CircleDollarSign],
   ["guests", "Guests", Users],
@@ -40,6 +42,7 @@ const workspaceRoles: Role[] = ["owner", "manager", "front-desk", "cashier", "wa
 const moduleOptions = ["Revenue & analytics", "Orders / bookings", "Inventory & cost", "Kitchen / service operations", "Guests & CRM", "AI insights"];
 const sectionModules: Record<string, string[]> = {
   operations: ["Orders / bookings", "Kitchen / service operations"],
+  food: ["Orders / bookings", "Kitchen / service operations"],
   inventory: ["Inventory & cost"],
   profit: ["Revenue & analytics"],
   guests: ["Guests & CRM"],
@@ -49,6 +52,7 @@ const sectionModules: Record<string, string[]> = {
 function sectionIsEnabled(key: string, workspace: WorkspaceContext | null) {
   if (key === "overview" || key === "settings") return true;
   if (key === "locations") return Boolean(workspace?.organizationId);
+  if (key === "food" && !workspace?.organizationId) return false;
   if (key === "team") return Boolean(workspace?.organizationId && ["owner", "manager"].includes(workspace.authorizationRole));
   if (key === "profit" && workspace?.organizationId && !["owner", "manager", "cashier"].includes(workspace.authorizationRole)) return false;
   if (!workspace || workspace.enabledModules.length === 0) return true;
@@ -113,6 +117,7 @@ export function DashboardApp({ section = "overview" }: { section?: string }) {
       {normalizedSection === "overview" && (mode === "supabase" && workspace ? <ProductionOverviewWorkspace workspace={workspace}/> : <Overview mode={mode} workspace={workspace} />)}
       {normalizedSection === "locations" && mode === "supabase" && workspace && <LocationsWorkspace workspace={workspace} onWorkspaceChange={setWorkspace}/>} 
       {normalizedSection === "operations" && (mode === "supabase" && workspace ? <ProductionOperationsWorkspace workspace={workspace}/> : <OperationsWorkspace />)}
+      {normalizedSection === "food" && mode === "supabase" && workspace && <ProductionFoodServiceWorkspace workspace={workspace}/>} 
       {normalizedSection === "inventory" && (mode === "supabase" && workspace ? <ProductionInventoryWorkspace workspace={workspace}/> : <InventoryWorkspace />)}
       {normalizedSection === "profit" && (mode === "supabase" && workspace ? <ProductionProfitWorkspace workspace={workspace}/> : <ProfitWorkspace />)}
       {normalizedSection === "guests" && (mode === "supabase" && workspace ? <ProductionGuestsWorkspace workspace={workspace}/> : <GuestsWorkspace />)}
