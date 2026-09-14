@@ -13,6 +13,7 @@ import { ProductionGuestsWorkspace } from "@/components/ProductionGuestsWorkspac
 import { ProductionOverviewWorkspace } from "@/components/ProductionOverviewWorkspace";
 import { ProductionProfitWorkspace } from "@/components/ProductionProfitWorkspace";
 import { ProductionSignalPopover } from "@/components/ProductionSignalPopover";
+import { ProductionAIWorkspace } from "@/components/ProductionAIWorkspace";
 
 const navigation = [
   ["overview", "Overview", House],
@@ -108,7 +109,7 @@ export function DashboardApp({ section = "overview" }: { section?: string }) {
       {normalizedSection === "inventory" && (mode === "supabase" && workspace ? <ProductionInventoryWorkspace workspace={workspace}/> : <InventoryWorkspace />)}
       {normalizedSection === "profit" && (mode === "supabase" && workspace ? <ProductionProfitWorkspace workspace={workspace}/> : <ProfitWorkspace />)}
       {normalizedSection === "guests" && (mode === "supabase" && workspace ? <ProductionGuestsWorkspace workspace={workspace}/> : <GuestsWorkspace />)}
-      {normalizedSection === "ai" && <AIWorkspace />}
+      {normalizedSection === "ai" && (mode === "supabase" && workspace ? <ProductionAIWorkspace workspace={workspace}/> : <AIWorkspace />)}
       {normalizedSection === "settings" && <SettingsView user={user} mode={mode} workspace={workspace} onUserChange={setUser} onWorkspaceChange={setWorkspace} />}
     </section>
 
