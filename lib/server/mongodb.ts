@@ -6,9 +6,10 @@ let clientPromise:Promise<MongoClient>|null=null;
 
 export function isMongoConfigured(){return Boolean(uri)}
 
-export async function getMongoDb():Promise<Db>{
+export async function getMongoClient():Promise<MongoClient>{
  if(!uri) throw new Error("MONGODB_URI is not configured");
  if(!clientPromise){const client=new MongoClient(uri,{maxPoolSize:10,minPoolSize:0});clientPromise=client.connect()}
- const client=await clientPromise;
- return client.db(dbName);
+ return clientPromise;
 }
+
+export async function getMongoDb():Promise<Db>{return (await getMongoClient()).db(dbName)}
