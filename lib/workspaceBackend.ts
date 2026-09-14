@@ -15,6 +15,7 @@ export type WorkspaceContext = {
   organizationName: string;
   hospitalityType: SetupState["hospitalityType"];
   role: SetupState["role"];
+  authorizationRole: SetupState["role"];
   propertyName: string;
   city: string;
   enabledModules: string[];
@@ -50,7 +51,7 @@ export async function loadWorkspaceContext(): Promise<WorkspaceContext | null> {
   const client = getSupabaseBrowserClient();
   if (!client) {
     const setup = readDemoSetup();
-    return setup ? { ...setup } : null;
+    return setup ? { ...setup, authorizationRole: setup.role } : null;
   }
 
   const { data, error } = await client.rpc("get_workspace_context");
@@ -63,6 +64,7 @@ export async function loadWorkspaceContext(): Promise<WorkspaceContext | null> {
     organizationName: String(raw.organization_name),
     hospitalityType: String(raw.hospitality_type) as WorkspaceContext["hospitalityType"],
     role: String(raw.role) as WorkspaceContext["role"],
+    authorizationRole: String(raw.authorization_role || raw.role) as WorkspaceContext["authorizationRole"],
     propertyName: String(raw.property_name),
     city: String(raw.city || ""),
     enabledModules: Array.isArray(raw.enabled_modules)
