@@ -2,11 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import type { ComponentType } from "react";
 import { Building2, Check, ChefHat, Coffee, Hotel, Store, UtensilsCrossed, Wine } from "lucide-react";
 import type { HospitalityType, Role } from "@/lib/domain";
 import { saveDemoSetup } from "@/lib/demoWorkspace";
 
-const businessTypes: { key: HospitalityType; label: string; icon: React.ComponentType<{ size?: number }> }[] = [
+const businessTypes: { key: HospitalityType; label: string; icon: ComponentType<{ size?: number }> }[] = [
   { key: "hotel", label: "Hotel", icon: Hotel }, { key: "restaurant", label: "Restaurant", icon: UtensilsCrossed }, { key: "cafe", label: "Café", icon: Coffee }, { key: "qsr", label: "QSR", icon: Store }, { key: "cloud-kitchen", label: "Cloud Kitchen", icon: ChefHat }, { key: "resort", label: "Resort", icon: Building2 }, { key: "bar-lounge", label: "Bar / Lounge", icon: Wine }, { key: "other", label: "Other", icon: Building2 },
 ];
 const roles: Role[] = ["owner", "manager", "front-desk", "cashier", "waiter", "kitchen", "inventory"];
