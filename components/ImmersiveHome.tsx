@@ -5,6 +5,7 @@ import { BarChart3, BrainCircuit, Building2, Coffee, Hotel, Layers3, ShieldCheck
 import { industries } from "@/lib/content";
 import { HospitalityWorld } from "./HospitalityWorld";
 import { ExperienceController } from "./ExperienceController";
+import { StoryProgress } from "./StoryProgress";
 import { useExperience } from "@/lib/experience";
 
 const painCards = [
@@ -21,6 +22,7 @@ export function ImmersiveHome() {
   return <>
     <HospitalityWorld />
     <ExperienceController />
+    <StoryProgress />
     <div className="world-vignette" />
     <button className="motion-toggle" onClick={toggle}>{reduced ? "Enable motion" : "Reduce motion"}</button>
     <main className="experience-main">
