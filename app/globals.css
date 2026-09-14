@@ -5,6 +5,7 @@
 @import "./styles/dashboard.css";
 @import "./styles/workspace.css";
 @import "./styles/leads.css";
+@import "./styles/footer-legal.css";
 @import "./styles/responsive.css";
 
 @tailwind base;
