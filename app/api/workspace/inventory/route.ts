@@ -1,0 +1,19 @@
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { handleWorkspaceError, objectId, requireLocation, requireWorkspace } from "@/lib/server/workspace";
+import { ensureWorkspaceIndexes } from "@/lib/server/workspaceIndexes";
+
+const Create=z.object({locationId:z.string(),name:z.string().trim().min(2).max(120),unit:z.string().trim().min(1).max(20),openingQty:z.coerce.number().min(0).max(1000000),reorderPoint:z.coerce.number().min(0).max(1000000),unitCost:z.coerce.number().min(0).max(10000000)});
+const Count=z.object({locationId:z.string(),itemId:z.string(),physicalQty:z.coerce.number().min(0).max(1000000)});
+
+export async function GET(request:NextRequest){
+ try{const{db,orgId}=await requireWorkspace(request);const locationId=request.nextUrl.searchParams.get("locationId")||"";const location=await requireLocation(db,orgId,locationId);await ensureWorkspaceIndexes(db);const rows=await db.collection("inventoryItems").find({orgId,locationId:location._id,active:{$ne:false}}).sort({name:1}).toArray();return NextResponse.json({items:rows.map(x=>({id:String(x._id),name:x.name,unit:x.unit,theoreticalQty:x.theoreticalQty,physicalQty:x.physicalQty,reorderPoint:x.reorderPoint,unitCost:x.unitCost,lastCountedAt:x.lastCountedAt??null}))})}catch(error){const e=handleWorkspaceError(error);return NextResponse.json({error:e.message},{status:e.status})}
+}
+
+export async function POST(request:NextRequest){
+ try{const{db,user,orgId}=await requireWorkspace(request);if(!["owner","manager","inventory"].includes(user.role))return NextResponse.json({error:"Inventory access required."},{status:403});const parsed=Create.safeParse(await request.json());if(!parsed.success)return NextResponse.json({error:"Invalid inventory item",issues:parsed.error.flatten().fieldErrors},{status:400});const location=await requireLocation(db,orgId,parsed.data.locationId);const now=new Date();const doc={orgId,locationId:location._id,name:parsed.data.name,unit:parsed.data.unit,theoreticalQty:parsed.data.openingQty,physicalQty:parsed.data.openingQty,reorderPoint:parsed.data.reorderPoint,unitCost:parsed.data.unitCost,active:true,createdAt:now,lastCountedAt:now};const result=await db.collection("inventoryItems").insertOne(doc);await db.collection("inventoryCounts").insertOne({orgId,locationId:location._id,itemId:result.insertedId,physicalQty:parsed.data.openingQty,kind:"opening",createdBy:objectId(user.id,"user"),createdAt:now});return NextResponse.json({item:{id:String(result.insertedId),...parsed.data,theoreticalQty:parsed.data.openingQty,physicalQty:parsed.data.openingQty}},{status:201})}catch(error){const e=handleWorkspaceError(error);return NextResponse.json({error:e.message},{status:e.status})}
+}
+
+export async function PATCH(request:NextRequest){
+ try{const{db,user,orgId}=await requireWorkspace(request);if(!["owner","manager","inventory"].includes(user.role))return NextResponse.json({error:"Inventory access required."},{status:403});const parsed=Count.safeParse(await request.json());if(!parsed.success)return NextResponse.json({error:"Invalid count",issues:parsed.error.flatten().fieldErrors},{status:400});const location=await requireLocation(db,orgId,parsed.data.locationId);const itemId=objectId(parsed.data.itemId,"inventory item");const now=new Date();const update=await db.collection("inventoryItems").updateOne({_id:itemId,orgId,locationId:location._id,active:{$ne:false}},{$set:{physicalQty:parsed.data.physicalQty,lastCountedAt:now}});if(!update.matchedCount)return NextResponse.json({error:"Inventory item not found."},{status:404});await db.collection("inventoryCounts").insertOne({orgId,locationId:location._id,itemId,physicalQty:parsed.data.physicalQty,kind:"physical-count",createdBy:objectId(user.id,"user"),createdAt:now});return NextResponse.json({ok:true,physicalQty:parsed.data.physicalQty})}catch(error){const e=handleWorkspaceError(error);return NextResponse.json({error:e.message},{status:e.status})}
+}
