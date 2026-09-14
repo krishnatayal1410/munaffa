@@ -1,0 +1,22 @@
+"use client";
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { seedFinance, seedGuestIssues, seedInventory, seedLocations, seedMenu, seedOrders, seedTeam } from "./workspaceSeed";
+import type { FinanceEvent, GuestIssue, InventoryItem, Location, LocationType, MenuItem, Order, OrderStatus, Purchase, TeamMember, TeamRole } from "./workspaceTypes";
+
+type NewOrder={locationId?:string;serviceRef:string;channel?:"staff"|"guest-qr";lines:{menuId:string;qty:number}[]};
+type State={activeLocationId:string;locations:Location[];menu:MenuItem[];orders:Order[];inventory:InventoryItem[];purchases:Purchase[];guestIssues:GuestIssue[];finance:FinanceEvent[];team:TeamMember[];setActiveLocation:(id:string)=>void;addLocation:(name:string,type:LocationType,city:string)=>void;addOrder:(input:NewOrder)=>string|null;advanceOrder:(id:string)=>void;countInventory:(id:string,qty:number)=>void;receivePurchase:(supplier:string,itemId:string,qty:number,unitCost:number)=>void;resolveGuestIssue:(id:string)=>void;addGuestIssue:(guest:string,rating:number,note:string)=>void;inviteMember:(name:string,role:TeamRole)=>void;resetDemo:()=>void};
+const now=()=>new Date().toISOString();const uid=(p:string)=>`${p}_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
+const initial=()=>({activeLocationId:"loc_civil",locations:seedLocations,menu:seedMenu,orders:seedOrders,inventory:seedInventory,purchases:[] as Purchase[],guestIssues:seedGuestIssues,finance:seedFinance,team:seedTeam});
+export const useDemoWorkspace=create<State>()(persist((set,get)=>({...initial(),
+setActiveLocation:(activeLocationId)=>set({activeLocationId}),
+addLocation:(name,type,city)=>set(s=>{const l:Location={id:uid("loc"),name,type,city};return{locations:[...s.locations,l],activeLocationId:l.id}}),
+addOrder:(input)=>{const s=get();const locationId=input.locationId??s.activeLocationId;const items=input.lines.flatMap(line=>{const m=s.menu.find(x=>x.id===line.menuId&&x.locationId===locationId);return m&&line.qty>0?[{menuId:m.id,name:m.name,qty:line.qty,price:m.price}]:[]});if(!items.length)return null;const order:Order={id:uid("ord"),locationId,serviceRef:input.serviceRef,channel:input.channel??"staff",status:"accepted",items,total:items.reduce((a,b)=>a+b.qty*b.price,0),createdAt:now()};set({orders:[order,...s.orders]});return order.id},
+advanceOrder:(orderId)=>set(s=>{const o=s.orders.find(x=>x.id===orderId);if(!o||o.status==="completed")return s;const flow:Record<OrderStatus,OrderStatus>={accepted:"preparing",preparing:"ready",ready:"completed",completed:"completed"};const status=flow[o.status];let inventory=s.inventory,finance=s.finance;if(status==="completed"){inventory=inventory.map(stock=>{const used=o.items.reduce((sum,line)=>{const m=s.menu.find(x=>x.id===line.menuId);const r=m?.recipe.find(x=>x.inventoryId===stock.id);return sum+(r?.qty??0)*line.qty},0);return used?{...stock,theoreticalQty:Math.max(0,stock.theoreticalQty-used)}:stock});finance=[{id:uid("fin"),locationId:o.locationId,type:"revenue",label:`Order ${o.serviceRef}`,amount:o.total,createdAt:now()},...finance]}return{orders:s.orders.map(x=>x.id===orderId?{...x,status}:x),inventory,finance}}),
+countInventory:(itemId,physicalQty)=>set(s=>({inventory:s.inventory.map(x=>x.id===itemId?{...x,physicalQty:Math.max(0,physicalQty)}:x)})),
+receivePurchase:(supplier,itemId,quantity,unitCost)=>set(s=>{const item=s.inventory.find(x=>x.id===itemId);if(!item||quantity<=0||unitCost<0)return s;const total=quantity*unitCost;const purchase:Purchase={id:uid("pur"),locationId:item.locationId,supplier,itemId,itemName:item.name,quantity,unitCost,total,createdAt:now()};return{purchases:[purchase,...s.purchases],inventory:s.inventory.map(x=>x.id===itemId?{...x,theoreticalQty:x.theoreticalQty+quantity,unitCost}:x),finance:[{id:uid("fin"),locationId:item.locationId,type:"expense",label:`${supplier} · ${item.name}`,amount:total,createdAt:now()},...s.finance]}}),
+resolveGuestIssue:(issueId)=>set(s=>({guestIssues:s.guestIssues.map(x=>x.id===issueId?{...x,status:"resolved"}:x)})),
+addGuestIssue:(guest,rating,note)=>set(s=>({guestIssues:[{id:uid("guest"),locationId:s.activeLocationId,guest,channel:"Direct",rating:Math.max(1,Math.min(5,rating)),note,status:"open",createdAt:now()},...s.guestIssues]})),
+inviteMember:(name,role)=>set(s=>({team:[...s.team,{id:uid("tm"),name,role,status:"invited"}]})),
+resetDemo:()=>set(initial())
+}),{name:"munaffa-meeting-demo-v1"}));
