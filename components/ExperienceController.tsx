@@ -11,10 +11,18 @@ export function ExperienceController() {
   const setScene = useExperience((s) => s.setScene);
   const setProgress = useExperience((s) => s.setProgress);
   const setLocalProgress = useExperience((s) => s.setLocalProgress);
+  const setReducedMotion = useExperience((s) => s.setReducedMotion);
   const reducedMotion = useExperience((s) => s.reducedMotion);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const syncSystemMotion = () => setReducedMotion(media.matches);
+    syncSystemMotion();
+    media.addEventListener("change", syncSystemMotion);
+    return () => media.removeEventListener("change", syncSystemMotion);
+  }, [setReducedMotion]);
+
+  useEffect(() => {
     const sections = Array.from(document.querySelectorAll<HTMLElement>("[data-scene]"));
     if (!sections.length) return;
 
@@ -44,7 +52,7 @@ export function ExperienceController() {
           },
         });
 
-        if (reducedMotion || media.matches || !copy) {
+        if (reducedMotion || !copy) {
           gsap.set(revealItems, { clearProps: "all", opacity: 1, y: 0, x: 0, scale: 1 });
           return;
         }
@@ -88,23 +96,6 @@ export function ExperienceController() {
                 toggleActions: "play none none reverse",
               },
             },
-          );
-        }
-
-        if (sectionIndex > 0) {
-          gsap.fromTo(
-            section,
-            { "--scene-glow": 0 } as gsap.TweenVars,
-            {
-              "--scene-glow": 1,
-              ease: "none",
-              scrollTrigger: {
-                trigger: section,
-                start: "top bottom",
-                end: "center center",
-                scrub: 0.6,
-              },
-            } as gsap.TweenVars,
           );
         }
       });
