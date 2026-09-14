@@ -1,21 +1,18 @@
-name: Munaffa Immersive 3D CI
+name: Munaffa Cinematic CI
 
 on:
   push:
     branches: [main]
-  workflow_dispatch:
-
-permissions:
-  contents: read
+  pull_request:
+    branches: [main]
 
 concurrency:
-  group: munaffa-immersive-${{ github.ref }}
+  group: munaffa-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

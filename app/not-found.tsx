@@ -1,0 +1,3 @@
+export default function NotFound() {
+  return <main style={{minHeight:"100vh",display:"grid",placeItems:"center",background:"#050505",color:"#f4efe6",padding:24,textAlign:"center"}}><div><span style={{fontSize:10,letterSpacing:".16em",color:"#e3b75f"}}>404 / OFF THE PATH</span><h1 style={{fontFamily:"Georgia,serif",fontSize:"clamp(60px,10vw,120px)",fontWeight:400,letterSpacing:"-.05em",margin:"18px 0"}}>This room does not exist.</h1><a href="/" style={{display:"inline-block",padding:"12px 16px",border:"1px solid rgba(255,255,255,.16)",borderRadius:999}}>Return to the experience</a></div></main>;
+}

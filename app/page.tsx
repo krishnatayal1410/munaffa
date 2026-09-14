@@ -1,5 +1,5 @@
-import { Experience } from "@/components/Experience";
+import { ImmersiveSite } from "@/components/ImmersiveSite";
 
 export default function HomePage() {
-  return <Experience/>;
+  return <ImmersiveSite/>;
 }

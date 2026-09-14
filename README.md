@@ -1,5 +1,30 @@
-# Munaffa — Immersive 3D Homepage
+# Munaffa — Cinematic Hospitality Experience
 
-Homepage-first rebuild. The experience is a continuous scroll-controlled 3D hospitality world built with Next.js, React Three Fiber, Three.js, Drei and GSAP.
+This repository is a fresh rebuild based on six user-supplied reference videos showing premium hotel, café, architectural walkthrough, product and AR-menu experiences.
 
-This branch intentionally contains only the immersive public experience and its verification infrastructure. Product/backend work comes after the visual experience is approved.
+## Direction
+
+The implementation deliberately does **not** reuse the previous Munaffa visual system. It uses a hybrid approach:
+
+- photoreal full-screen WebGL image portals for venue realism;
+- scroll-driven 3D camera travel and parallax;
+- floating product imagery inside the WebGL world;
+- minimal editorial DOM typography over the experience;
+- functioning interactive menu/cart/order demo;
+- functioning camera-based AR-style ingredient lens with a clear non-recognition disclaimer;
+- functioning illustrative profit exposure simulator;
+- mobile, reduced-motion and WebGL fallbacks;
+- privacy, terms, custom 404, sitemap, robots, security headers and health endpoint.
+
+## Development
+
+```bash
+npm install
+npm run dev
+npm run typecheck
+npm run build
+```
+
+## Prototype boundaries
+
+The menu does not process real payments, the AR lens does not perform automated food recognition, and the profit scenario does not claim savings or customer outcomes. Before commercial launch, replace remote prototype imagery with an approved first-party asset pipeline and connect production authentication, data, analytics and form persistence as needed.
