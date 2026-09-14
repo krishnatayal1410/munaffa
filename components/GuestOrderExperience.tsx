@@ -3,9 +3,11 @@
 import { CheckCircle2, Minus, Plus, RefreshCw, ShoppingBag, UtensilsCrossed } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  getGuestOrderStatus,
   resolveGuestOrderingPoint,
   submitGuestOrder,
   type GuestOrderReceipt,
+  type GuestOrderStatus,
   type GuestOrderingView,
 } from "@/lib/guestOrderingBackend";
 
@@ -17,6 +19,9 @@ export function GuestOrderExperience({ token }: { token: string }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [receipt, setReceipt] = useState<GuestOrderReceipt | null>(null);
+  const [liveStatus, setLiveStatus] = useState<GuestOrderStatus | null>(null);
+  const [statusLoading, setStatusLoading] = useState(false);
+  const [statusError, setStatusError] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -32,6 +37,34 @@ export function GuestOrderExperience({ token }: { token: string }) {
   }, [token]);
 
   useEffect(() => { void load(); }, [load]);
+
+  const refreshOrderStatus = useCallback(async () => {
+    if (!receipt) return;
+    setStatusLoading(true);
+    setStatusError("");
+    try {
+      setLiveStatus(await getGuestOrderStatus(token, receipt.orderId));
+    } catch (cause) {
+      setStatusError(cause instanceof Error ? cause.message : "Could not refresh the order status.");
+    } finally {
+      setStatusLoading(false);
+    }
+  }, [receipt, token]);
+
+  useEffect(() => {
+    if (!receipt) {
+      setLiveStatus(null);
+      setStatusError("");
+      return;
+    }
+    void refreshOrderStatus();
+  }, [receipt, refreshOrderStatus]);
+
+  useEffect(() => {
+    if (!receipt || ["completed", "cancelled"].includes(liveStatus?.status || "")) return;
+    const interval = window.setInterval(() => void refreshOrderStatus(), 8000);
+    return () => window.clearInterval(interval);
+  }, [liveStatus?.status, receipt, refreshOrderStatus]);
 
   const menuItems = useMemo(() => view?.menu.flatMap((category) => category.items) || [], [view]);
   const itemById = useMemo(() => new Map(menuItems.map((item) => [item.id, item])), [menuItems]);
@@ -56,6 +89,14 @@ export function GuestOrderExperience({ token }: { token: string }) {
         items: cartLines.map(([menuItemId, quantity]) => ({ menuItemId, quantity })),
       });
       setReceipt(next);
+      setLiveStatus({
+        orderId: next.orderId,
+        status: next.status,
+        subtotal: next.subtotal,
+        currency: next.currency,
+        createdAt: new Date().toISOString(),
+        completedAt: null,
+      });
       setCart({});
       setNotes("");
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -66,11 +107,20 @@ export function GuestOrderExperience({ token }: { token: string }) {
     }
   }
 
+  function orderAgain() {
+    setReceipt(null);
+    setLiveStatus(null);
+    setStatusError("");
+  }
+
   if (loading) return <main className="guest-order-page"><div className="guest-order-state"><RefreshCw className="guest-spinner"/><b>Opening the live menu…</b><span>No app installation is required.</span></div></main>;
 
   if (!view) return <main className="guest-order-page"><div className="guest-order-state error"><UtensilsCrossed/><b>Ordering link unavailable</b><span>{error || "This QR code may have been disabled. Please ask a staff member for help."}</span><button onClick={() => void load()}>Try again</button></div></main>;
 
-  if (receipt) return <main className="guest-order-page"><section className="guest-order-hero compact"><div className="guest-order-brand"><span>M</span><b>munaffa</b></div><small>{view.businessName} · {view.propertyName}</small></section><div className="guest-order-confirmation"><CheckCircle2 size={44}/><span>Order received</span><h1>Sent to the restaurant.</h1><p>Your order is now in the live service queue for <b>{view.orderingLabel}</b>. Staff will handle preparation, service and billing according to the venue’s normal process.</p><div><small>Order reference</small><b>{receipt.orderId.slice(0, 8).toUpperCase()}</b></div><div><small>Submitted subtotal</small><b>{formatMoney(receipt.subtotal)}</b></div><button onClick={() => setReceipt(null)}>Place another order</button><small className="guest-order-disclaimer">No payment was collected on this page. Pricing is the menu subtotal submitted to the venue and may be subject to its taxes, service charges or billing rules.</small></div></main>;
+  if (receipt) {
+    const currentStatus = liveStatus?.status || receipt.status;
+    return <main className="guest-order-page"><section className="guest-order-hero compact"><div className="guest-order-brand"><span>M</span><b>munaffa</b></div><small>{view.businessName} · {view.propertyName}</small></section><div className="guest-order-confirmation"><CheckCircle2 size={44}/><span>Order received</span><h1>Sent to the restaurant.</h1><p>Your order is in the live service queue for <b>{view.orderingLabel}</b>. This page checks the venue’s order status automatically while you keep it open.</p><div className="guest-live-status"><small>Live status</small><b className={`guest-status status-${currentStatus}`}>{statusLabel(currentStatus)}</b></div><div><small>Order reference</small><b>{receipt.orderId.slice(0, 8).toUpperCase()}</b></div><div><small>Submitted subtotal</small><b>{formatMoney(receipt.subtotal)}</b></div>{statusError && <div className="guest-status-error">{statusError}</div>}<button className="guest-status-refresh" disabled={statusLoading} onClick={() => void refreshOrderStatus()}><RefreshCw size={14}/>{statusLoading ? "Checking…" : "Check status now"}</button><button onClick={orderAgain}>Place another order</button><small className="guest-order-disclaimer">No payment was collected on this page. Pricing is the menu subtotal submitted to the venue and may be subject to its taxes, service charges or billing rules.</small></div></main>;
+  }
 
   return <main className="guest-order-page">
     <section className="guest-order-hero"><div className="guest-order-brand"><span>M</span><b>munaffa</b></div><small>{view.businessName}</small><h1>{view.propertyName}</h1><p>{view.orderingLabel} · {serviceLabel(view.serviceType)}</p></section>
@@ -91,4 +141,8 @@ function formatMoney(value: number) {
 
 function serviceLabel(value: string) {
   return ({ dine_in: "Dine in", room_service: "Room service", counter: "Counter order", takeaway: "Takeaway", other: "Guest order" } as Record<string, string>)[value] || "Guest order";
+}
+
+function statusLabel(value: string) {
+  return ({ new: "Received", accepted: "Accepted", preparing: "Preparing", ready: "Ready", served: "Served", completed: "Completed", cancelled: "Cancelled" } as Record<string, string>)[value] || "Received";
 }
