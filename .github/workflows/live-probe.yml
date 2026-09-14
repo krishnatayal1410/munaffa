@@ -1,0 +1,26 @@
+name: Munaffa Live Probe
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/live-probe.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Probe production alias
+        shell: bash
+        run: |
+          BASE_URL="https://munaffa-krishnatayal1410s-projects.vercel.app"
+          echo "--- HEALTH ---"
+          curl -L -i --silent --show-error --max-time 25 "$BASE_URL/api/health" || true
+          echo
+          echo "--- HOME ---"
+          curl -L -I --silent --show-error --max-time 25 "$BASE_URL/" || true
