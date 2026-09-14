@@ -2,22 +2,24 @@
 
 import { create } from "zustand";
 
-type ExperienceState = {
+type State = {
   progress: number;
   scene: number;
-  localProgress: number;
+  local: number;
+  velocity: number;
   pointerX: number;
   pointerY: number;
   reducedMotion: boolean;
-  update: (next: Partial<Omit<ExperienceState, "update">>) => void;
+  set: (next: Partial<Omit<State, "set">>) => void;
 };
 
-export const useExperience = create<ExperienceState>((set) => ({
+export const useExperience = create<State>((set) => ({
   progress: 0,
   scene: 0,
-  localProgress: 0,
+  local: 0,
+  velocity: 0,
   pointerX: 0,
   pointerY: 0,
   reducedMotion: false,
-  update: (next) => set(next)
+  set: (next) => set(next)
 }));

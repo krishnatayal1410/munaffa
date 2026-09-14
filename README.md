@@ -1,7 +1,5 @@
-# Munaffa
+# Munaffa — Immersive 3D Homepage
 
-Immersive homepage rebuild focused on a persistent scroll-driven 3D hospitality world.
+Homepage-first rebuild. The experience is a continuous scroll-controlled 3D hospitality world built with Next.js, React Three Fiber, Three.js, Drei and GSAP.
 
-The current experience intentionally prioritizes the homepage before rebuilding product application/backend surfaces.
-
-Visible prototype furniture is loaded from a public furniture mirror; the HDR environment is from Poly Haven. Before commercial release, vendor approved assets and retain exact per-asset license records.
+This branch intentionally contains only the immersive public experience and its verification infrastructure. Product/backend work comes after the visual experience is approved.

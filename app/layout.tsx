@@ -3,10 +3,10 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Munaffa — Hospitality in motion",
-  description: "An immersive 3D hospitality operating-system experience connecting service, inventory, payments and profit visibility.",
+  description: "An immersive 3D journey through the hospitality operating system — from guest interaction to profit visibility.",
   openGraph: {
     title: "Munaffa — Hospitality in motion",
-    description: "Scroll through the hospitality system, from guest interaction to profit visibility.",
+    description: "A scroll-controlled 3D hospitality experience.",
     type: "website"
   }
 };
