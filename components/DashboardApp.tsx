@@ -9,6 +9,7 @@ import { backendMode, getCurrentUser, loadWorkspaceContext, saveWorkspaceSetup, 
 import { AIWorkspace, GuestsWorkspace, InventoryWorkspace, OperationsWorkspace, ProfitWorkspace } from "@/components/ProductWorkspace";
 import { ProductionOperationsWorkspace } from "@/components/ProductionOperationsWorkspace";
 import { ProductionInventoryWorkspace } from "@/components/ProductionInventoryWorkspace";
+import { ProductionGuestsWorkspace } from "@/components/ProductionGuestsWorkspace";
 
 const navigation = [
   ["overview", "Overview", House],
@@ -97,12 +98,12 @@ export function DashboardApp({ section = "overview" }: { section?: string }) {
     </aside>
 
     <section className="dashboard-main">
-      <header className="dashboard-topbar"><button className="mobile-dashboard-menu" onClick={() => setMenu((value) => !value)} aria-label="Toggle workspace navigation">{menu ? <X/> : <Menu/>}</button><div><small>{mode === "supabase" ? "Production account" : "Guided sample workspace"}</small><h1>{sectionTitle}</h1></div><div className="top-actions"><div className="notification-wrap"><button aria-label="Notifications" aria-expanded={notificationsOpen} onClick={() => setNotificationsOpen((open) => !open)}><Bell size={17}/><i className="notification-dot" /></button>{notificationsOpen && <NotificationPopover mode={mode} workspace={workspace} onClose={() => setNotificationsOpen(false)} />}</div><span>{user.name.slice(0, 1).toUpperCase()}</span></div></header>
+      <header className="dashboard-topbar"><button className="mobile-dashboard-menu" onClick={() => setMenu((value) => !value)} aria-label="Toggle workspace navigation">{menu ? <X/> : <Menu/>}</button><div><small>{mode === "supabase" ? "Production account" : "Guided sample workspace"}</small><h1>{sectionTitle}</h1></div><div className="top-actions"><div className="notification-wrap"><button aria-label="Open illustrative signal preview" aria-expanded={notificationsOpen} onClick={() => setNotificationsOpen((open) => !open)}><Bell size={17}/><i className="notification-dot preview" /></button>{notificationsOpen && <NotificationPopover workspace={workspace} onClose={() => setNotificationsOpen(false)} />}</div><span>{user.name.slice(0, 1).toUpperCase()}</span></div></header>
       {normalizedSection === "overview" && <Overview mode={mode} workspace={workspace} />}
       {normalizedSection === "operations" && (mode === "supabase" && workspace ? <ProductionOperationsWorkspace workspace={workspace}/> : <OperationsWorkspace />)}
       {normalizedSection === "inventory" && (mode === "supabase" && workspace ? <ProductionInventoryWorkspace workspace={workspace}/> : <InventoryWorkspace />)}
       {normalizedSection === "profit" && <ProfitWorkspace />}
-      {normalizedSection === "guests" && <GuestsWorkspace />}
+      {normalizedSection === "guests" && (mode === "supabase" && workspace ? <ProductionGuestsWorkspace workspace={workspace}/> : <GuestsWorkspace />)}
       {normalizedSection === "ai" && <AIWorkspace />}
       {normalizedSection === "settings" && <SettingsView user={user} mode={mode} workspace={workspace} onUserChange={setUser} onWorkspaceChange={setWorkspace} />}
     </section>
@@ -111,14 +112,14 @@ export function DashboardApp({ section = "overview" }: { section?: string }) {
   </main>;
 }
 
-function NotificationPopover({ mode, workspace, onClose }: { mode: "supabase" | "demo"; workspace: WorkspaceContext | null; onClose: () => void }) {
+function NotificationPopover({ workspace, onClose }: { workspace: WorkspaceContext | null; onClose: () => void }) {
   const items = [
     ["Inventory variance needs review", "Compare theoretical and physical count before assigning a cause."],
     ["Service queue has high-priority work", "Two sample tasks are marked high priority and not complete."],
     ["Supplier cost signal moved", "Illustrative purchase-cost movement should be checked against recent invoices."],
   ];
   const target = sectionIsEnabled("operations", workspace) ? "/app/operations" : sectionIsEnabled("inventory", workspace) ? "/app/inventory" : sectionIsEnabled("profit", workspace) ? "/app/profit" : "/app";
-  return <div className="notification-popover" role="dialog" aria-label="Notifications"><header><div><small>{mode === "supabase" ? "Workspace signals" : "Sample signals"}</small><b>Needs attention</b></div><button type="button" aria-label="Close notifications" onClick={onClose}>×</button></header>{items.map(([title, copy], index) => <article key={title}><i className={index === 0 ? "danger-dot" : "warn-dot"}/><div><b>{title}</b><span>{copy}</span><em>Illustrative</em></div></article>)}<Link href={target} onClick={onClose}>Open workspace →</Link></div>;
+  return <div className="notification-popover" role="dialog" aria-label="Illustrative signal preview"><header><div><small>Illustrative preview</small><b>Example attention signals</b></div><button type="button" aria-label="Close signal preview" onClick={onClose}>×</button></header>{items.map(([title, copy], index) => <article key={title}><i className={index === 0 ? "danger-dot" : "warn-dot"}/><div><b>{title}</b><span>{copy}</span><em>Illustrative</em></div></article>)}<Link href={target} onClick={onClose}>Open workspace →</Link></div>;
 }
 
 function Overview({ mode, workspace }: { mode: "supabase" | "demo"; workspace: WorkspaceContext | null }) {
@@ -129,7 +130,7 @@ function Overview({ mode, workspace }: { mode: "supabase" | "demo"; workspace: W
   ].filter((item) => sectionIsEnabled(item.key, workspace));
   const firstHref = quickLinks[0]?.href || "/app/settings";
 
-  return <div className="dashboard-content"><div className="welcome-row"><div><span className="kicker">{mode === "supabase" ? "Connected account" : "Interactive sample"}</span><h2>See the whole business before it becomes a problem.</h2><p>{mode === "supabase" ? "Your account, workspace, operations and inventory can be persisted. Remaining analytical values stay illustrative until their production data sources are connected." : "Use the enabled modules to change service status, recount inventory, model contribution, resolve guest feedback and explore sample intelligence."}</p></div><Link href={firstHref} className="pill primary">Explore workspace</Link></div><div className="metric-row">{demoMetrics.map(([label,value,change]) => <article key={label}><small>{label}</small><b>{value}</b><em>{change} · Illustrative</em></article>)}</div><div className="dashboard-grid"><article className="chart-card"><header><div><small>Revenue + contribution</small><b>Last 7 days · Illustrative</b></div><ChartNoAxesCombined size={18}/></header><div className="fake-chart">{[32,52,41,66,58,78,88,71,91,76,95,86].map((height,index)=><i key={index} style={{height:`${height}%`}} />)}</div></article><article className="attention-card"><header><PackageSearch size={18}/><div><small>Needs attention</small><b>Operational signals</b></div></header>{["High-volume ingredient variance", "Weekend demand above baseline", "Three service requests delayed", "Supplier cost increased"].map((signal,index)=><div key={signal}><span className={index===0?"danger-dot":"warn-dot"}/><b>{signal}</b><small>Illustrative signal</small></div>)}</article></div>{quickLinks.length > 0 && <div className="overview-next">{quickLinks.map(({ href, icon: Icon, title, copy }) => <Link key={href} href={href}><Icon size={18}/><span><b>{title}</b><small>{copy}</small></span>→</Link>)}</div>}</div>;
+  return <div className="dashboard-content"><div className="welcome-row"><div><span className="kicker">{mode === "supabase" ? "Connected account" : "Interactive sample"}</span><h2>See the whole business before it becomes a problem.</h2><p>{mode === "supabase" ? "Your account, workspace, operations, inventory and guest recovery can be persisted. Profit analytics and AI stay illustrative until their production data sources are connected." : "Use the enabled modules to change service status, recount inventory, model contribution, resolve guest feedback and explore sample intelligence."}</p></div><Link href={firstHref} className="pill primary">Explore workspace</Link></div><div className="metric-row">{demoMetrics.map(([label,value,change]) => <article key={label}><small>{label}</small><b>{value}</b><em>{change} · Illustrative</em></article>)}</div><div className="dashboard-grid"><article className="chart-card"><header><div><small>Revenue + contribution</small><b>Last 7 days · Illustrative</b></div><ChartNoAxesCombined size={18}/></header><div className="fake-chart">{[32,52,41,66,58,78,88,71,91,76,95,86].map((height,index)=><i key={index} style={{height:`${height}%`}} />)}</div></article><article className="attention-card"><header><PackageSearch size={18}/><div><small>Needs attention</small><b>Illustrative signals</b></div></header>{["High-volume ingredient variance", "Weekend demand above baseline", "Three service requests delayed", "Supplier cost increased"].map((signal,index)=><div key={signal}><span className={index===0?"danger-dot":"warn-dot"}/><b>{signal}</b><small>Illustrative signal</small></div>)}</article></div>{quickLinks.length > 0 && <div className="overview-next">{quickLinks.map(({ href, icon: Icon, title, copy }) => <Link key={href} href={href}><Icon size={18}/><span><b>{title}</b><small>{copy}</small></span>→</Link>)}</div>}</div>;
 }
 
 function SettingsView({ user, mode, workspace, onUserChange, onWorkspaceChange }: { user: DemoUser; mode: "supabase" | "demo"; workspace: WorkspaceContext | null; onUserChange: (user: DemoUser) => void; onWorkspaceChange: (workspace: WorkspaceContext | null) => void }) {
