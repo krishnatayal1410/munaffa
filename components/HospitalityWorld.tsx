@@ -25,6 +25,7 @@ const assets = {
 };
 
 type Quality = "high" | "low";
+type MountedZones = { restaurant: boolean; cafe: boolean; operations: boolean; profit: boolean; stream: boolean };
 
 class WorldErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
@@ -32,10 +33,7 @@ class WorldErrorBoundary extends Component<{ children: ReactNode }, { failed: bo
   componentDidCatch(error: Error, info: ErrorInfo) {
     if (process.env.NODE_ENV === "development") console.error("Munaffa 3D world failed", error, info);
   }
-  render() {
-    if (this.state.failed) return <WorldFallback />;
-    return this.props.children;
-  }
+  render() { return this.state.failed ? <WorldFallback /> : this.props.children; }
 }
 
 function WorldFallback() {
@@ -53,10 +51,7 @@ function RealAsset({ url, position, rotation = [0, 0, 0], scale = 1 }: {
     const next = gltf.scene.clone(true);
     next.traverse((child) => {
       const mesh = child as THREE.Mesh;
-      if (mesh.isMesh) {
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
-      }
+      if (mesh.isMesh) { mesh.castShadow = true; mesh.receiveShadow = true; }
     });
     return next;
   }, [gltf.scene]);
@@ -64,11 +59,7 @@ function RealAsset({ url, position, rotation = [0, 0, 0], scale = 1 }: {
 }
 
 function RoomEnvelope({ position, width = 11, depth = 7.5, tone = "#141d17", accent = "#9df56f" }: {
-  position: [number, number, number];
-  width?: number;
-  depth?: number;
-  tone?: string;
-  accent?: string;
+  position: [number, number, number]; width?: number; depth?: number; tone?: string; accent?: string;
 }) {
   const [x, y, z] = position;
   return <group position={[x, y, z]}>
@@ -149,22 +140,51 @@ function CameraRig() {
   const look = useRef(new THREE.Vector3());
   const cameraCurve = useMemo(() => new THREE.CatmullRomCurve3([new THREE.Vector3(-2.8,4.6,10.4),new THREE.Vector3(3.2,3.8,8.7),new THREE.Vector3(13.2,3.55,8.1),new THREE.Vector3(27.5,3.35,7.7),new THREE.Vector3(41.2,3.55,8.15),new THREE.Vector3(55.4,3.85,8.6),new THREE.Vector3(60.2,4.5,10.2)]), []);
   const targetCurve = useMemo(() => new THREE.CatmullRomCurve3([new THREE.Vector3(0,1.45,0),new THREE.Vector3(5,1.35,0),new THREE.Vector3(14,1.35,-.35),new THREE.Vector3(28,1.35,.25),new THREE.Vector3(42,1.45,0),new THREE.Vector3(57,1.8,0),new THREE.Vector3(57,1.9,0)]), []);
-  useFrame(({ camera, pointer }) => { const t = THREE.MathUtils.clamp(progress,0,1); const targetPosition = cameraCurve.getPointAt(t); const targetLook = targetCurve.getPointAt(t); if (!reduced) { targetPosition.x += pointer.x*.16; targetPosition.y += pointer.y*.12; targetLook.x += pointer.x*.22; targetLook.y += pointer.y*.1; } camera.position.lerp(targetPosition,reduced?.16:.055); look.current.lerp(targetLook,reduced?.2:.08); camera.lookAt(look.current); });
+  useFrame(({ camera, pointer }) => {
+    const t = THREE.MathUtils.clamp(progress,0,1);
+    const targetPosition = cameraCurve.getPointAt(t);
+    const targetLook = targetCurve.getPointAt(t);
+    if (!reduced) { targetPosition.x += pointer.x*.16; targetPosition.y += pointer.y*.12; targetLook.x += pointer.x*.22; targetLook.y += pointer.y*.1; }
+    camera.position.lerp(targetPosition,reduced?.16:.055);
+    look.current.lerp(targetLook,reduced?.2:.08);
+    camera.lookAt(look.current);
+  });
   return null;
 }
 
 function SceneContent({ quality }: { quality: Quality }) {
+  const progress = useExperience((s) => s.progress);
   const leakageCount = quality === "low" ? 6 : 16;
-  return <><HotelLobbyStage/><RestaurantStage/><CafeStage/><OperationsStage/><ProfitCommandStage quality={quality}/><SignalStream quality={quality}/>{Array.from({length:leakageCount},(_,index)=><LeakageParticle key={index} index={index}/>)}{quality === "high" && <ContactShadows position={[28,.02,0]} opacity={.72} scale={72} blur={2.8} far={16}/>}</>;
+  const [mounted, setMounted] = useState<MountedZones>({ restaurant: false, cafe: false, operations: false, profit: false, stream: false });
+
+  useEffect(() => {
+    setMounted((current) => {
+      const next: MountedZones = {
+        restaurant: current.restaurant || progress >= 0.055,
+        cafe: current.cafe || progress >= 0.22,
+        operations: current.operations || progress >= 0.39,
+        profit: current.profit || progress >= 0.57,
+        stream: current.stream || progress >= 0.14,
+      };
+      return next.restaurant === current.restaurant && next.cafe === current.cafe && next.operations === current.operations && next.profit === current.profit && next.stream === current.stream ? current : next;
+    });
+  }, [progress]);
+
+  return <>
+    <Suspense fallback={null}><HotelLobbyStage /></Suspense>
+    {mounted.restaurant && <Suspense fallback={null}><RestaurantStage /></Suspense>}
+    {mounted.cafe && <Suspense fallback={null}><CafeStage /></Suspense>}
+    {mounted.operations && <Suspense fallback={null}><OperationsStage /></Suspense>}
+    {mounted.profit && <ProfitCommandStage quality={quality} />}
+    {mounted.stream && <SignalStream quality={quality} />}
+    {Array.from({ length: leakageCount }, (_, index) => <LeakageParticle key={index} index={index} />)}
+    {quality === "high" && <ContactShadows position={[28,.02,0]} opacity={.72} scale={72} blur={2.8} far={16}/>} 
+  </>;
 }
 
 function supportsWebGL() {
-  try {
-    const canvas = document.createElement("canvas");
-    return Boolean(canvas.getContext("webgl2") || canvas.getContext("webgl"));
-  } catch {
-    return false;
-  }
+  try { const canvas = document.createElement("canvas"); return Boolean(canvas.getContext("webgl2") || canvas.getContext("webgl")); }
+  catch { return false; }
 }
 
 export function HospitalityWorld() {
@@ -182,5 +202,5 @@ export function HospitalityWorld() {
   if (webgl === false) return <WorldFallback />;
   if (webgl === null) return <div className="world-shell world-loading" aria-hidden="true" />;
 
-  return <WorldErrorBoundary><div className={`world-shell quality-${quality}`} aria-hidden="true"><Canvas shadows={quality === "high"} dpr={quality === "low" ? [0.75,1] : [1,1.55]} camera={{position:[-2.8,4.6,10.4],fov:41,near:.1,far:130}} gl={{antialias:quality === "high",powerPreference:"high-performance"}}><color attach="background" args={["#050b08"]}/><fogExp2 attach="fog" args={["#050b08",.014]}/><hemisphereLight intensity={.68} color="#d5f8d7" groundColor="#27150d"/><directionalLight position={[-5,10,7]} intensity={2.3} color="#ffe0b2" castShadow={quality === "high"} shadow-mapSize-width={1024} shadow-mapSize-height={1024}/><Suspense fallback={null}><Environment files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/warm_restaurant_1k.hdr" environmentIntensity={.45}/><SceneContent quality={quality}/></Suspense><CameraRig/></Canvas></div></WorldErrorBoundary>;
+  return <WorldErrorBoundary><div className={`world-shell quality-${quality}`} aria-hidden="true"><Canvas shadows={quality === "high"} dpr={quality === "low" ? [0.75,1] : [1,1.55]} camera={{position:[-2.8,4.6,10.4],fov:41,near:.1,far:130}} gl={{antialias:quality === "high",powerPreference:"high-performance"}}><color attach="background" args={["#050b08"]}/><fogExp2 attach="fog" args={["#050b08",.014]}/><hemisphereLight intensity={.68} color="#d5f8d7" groundColor="#27150d"/><directionalLight position={[-5,10,7]} intensity={2.3} color="#ffe0b2" castShadow={quality === "high"} shadow-mapSize-width={1024} shadow-mapSize-height={1024}/><Suspense fallback={null}><Environment files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/warm_restaurant_1k.hdr" environmentIntensity={.45}/></Suspense><SceneContent quality={quality}/><CameraRig/></Canvas></div></WorldErrorBoundary>;
 }
