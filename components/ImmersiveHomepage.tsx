@@ -88,6 +88,7 @@ export function ImmersiveHomepage() {
     <div id="story" className="story">
       {scenes.map((scene, index) => <section
         key={scene.eyebrow}
+        id={`scene-${index}`}
         data-scene={index}
         className={`chapter chapter-${index} ${index % 2 ? "chapter-right" : "chapter-left"}`}
       >
@@ -98,7 +99,7 @@ export function ImmersiveHomepage() {
           {index === 0 && <div className="scroll-cue" data-reveal><span>Scroll to enter</span><ArrowDown size={15}/></div>}
           {index === 5 && <div className="leak-legend" data-reveal><span>Waste</span><span>Variance</span><span>Discounts</span><span>Service friction</span></div>}
           {index === 7 && <div className="industry-words" data-reveal><b>HOTEL</b><b>RESTAURANT</b><b>CAFÉ</b><b>RESORT</b><b>QSR</b></div>}
-          {index === 8 && <a className="hero-cta" href="#story" data-reveal>Replay the journey <ArrowRight size={15}/></a>}
+          {index === 8 && <a className="hero-cta" href="#scene-0" data-reveal>Replay the journey <ArrowRight size={15}/></a>}
         </div>
         <span className="chapter-number" aria-hidden="true">0{index + 1}</span>
       </section>)}
@@ -107,7 +108,7 @@ export function ImmersiveHomepage() {
     <footer className="experience-footer">
       <Brand/>
       <span>Homepage concept first. Product application comes after the experience is approved.</span>
-      <a href="#story">Back to top ↑</a>
+      <a href="#scene-0">Back to top ↑</a>
     </footer>
   </main>;
 }
@@ -116,12 +117,12 @@ function Header() {
   return <header className="floating-header">
     <Brand/>
     <div className="header-center">IMMERSIVE HOSPITALITY SYSTEM</div>
-    <a href="#story" className="header-action">ENTER <ArrowRight size={12}/></a>
+    <a href="#scene-0" className="header-action">ENTER <ArrowRight size={12}/></a>
   </header>;
 }
 
 function Brand() {
-  return <a className="brand" href="#story"><i>M</i><span>Munaffa</span></a>;
+  return <a className="brand" href="#scene-0"><i>M</i><span>Munaffa</span></a>;
 }
 
 function Progress({ scene }: { scene: number }) {
