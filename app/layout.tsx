@@ -5,6 +5,7 @@ import "./guest.css";
 import "./meeting.css";
 import "./qr.css";
 import "./pilot.css";
+import "./account.css";
 
 export const metadata: Metadata = {
   title: "Munaffa — Immersive Hospitality Experience",
