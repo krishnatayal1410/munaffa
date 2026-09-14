@@ -34,17 +34,10 @@ create table if not exists public.properties (
   organization_id uuid not null references public.organizations(id) on delete cascade,
   name text not null check (char_length(name) between 2 and 120),
   city text not null check (char_length(city) between 2 and 120),
-  hospitality_type text not null check (hospitalality_type is null) deferrable initially deferred
+  hospitality_type text not null check (hospitality_type in ('hotel','restaurant','cafe','qsr','cloud-kitchen','resort','bar-lounge','other')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
-
--- Replace the temporary compatibility column constraint above with the intended one.
-alter table public.properties drop constraint if exists properties_hospitality_type_check;
-alter table public.properties
-  add constraint properties_hospitality_type_check
-  check (hospitality_type in ('hotel','restaurant','cafe','qsr','cloud-kitchen','resort','bar-lounge','other'));
-
-alter table public.properties
-  add column if not exists created_at timestamptz not null default now();
 
 create table if not exists public.workspace_settings (
   organization_id uuid primary key references public.organizations(id) on delete cascade,
@@ -203,7 +196,8 @@ begin
     update public.properties
       set name = trim(p_property_name),
           city = trim(p_city),
-          hospitality_type = p_hospitality_type
+          hospitality_type = p_hospitality_type,
+          updated_at = now()
       where id = v_property_id;
   end if;
 
@@ -249,5 +243,7 @@ as $$
   limit 1;
 $$;
 
+revoke all on function public.complete_onboarding(text,text,text,text,text,text[]) from public;
+revoke all on function public.get_workspace_context() from public;
 grant execute on function public.complete_onboarding(text,text,text,text,text,text[]) to authenticated;
 grant execute on function public.get_workspace_context() to authenticated;
