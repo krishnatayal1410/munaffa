@@ -10,6 +10,7 @@ import { AIWorkspace, GuestsWorkspace, InventoryWorkspace, OperationsWorkspace, 
 import { ProductionOperationsWorkspace } from "@/components/ProductionOperationsWorkspace";
 import { ProductionInventoryWorkspace } from "@/components/ProductionInventoryWorkspace";
 import { ProductionGuestsWorkspace } from "@/components/ProductionGuestsWorkspace";
+import { ProductionOverviewWorkspace } from "@/components/ProductionOverviewWorkspace";
 
 const navigation = [
   ["overview", "Overview", House],
@@ -99,7 +100,7 @@ export function DashboardApp({ section = "overview" }: { section?: string }) {
 
     <section className="dashboard-main">
       <header className="dashboard-topbar"><button className="mobile-dashboard-menu" onClick={() => setMenu((value) => !value)} aria-label="Toggle workspace navigation">{menu ? <X/> : <Menu/>}</button><div><small>{mode === "supabase" ? "Production account" : "Guided sample workspace"}</small><h1>{sectionTitle}</h1></div><div className="top-actions"><div className="notification-wrap"><button aria-label="Open illustrative signal preview" aria-expanded={notificationsOpen} onClick={() => setNotificationsOpen((open) => !open)}><Bell size={17}/><i className="notification-dot preview" /></button>{notificationsOpen && <NotificationPopover workspace={workspace} onClose={() => setNotificationsOpen(false)} />}</div><span>{user.name.slice(0, 1).toUpperCase()}</span></div></header>
-      {normalizedSection === "overview" && <Overview mode={mode} workspace={workspace} />}
+      {normalizedSection === "overview" && (mode === "supabase" && workspace ? <ProductionOverviewWorkspace workspace={workspace}/> : <Overview mode={mode} workspace={workspace} />)}
       {normalizedSection === "operations" && (mode === "supabase" && workspace ? <ProductionOperationsWorkspace workspace={workspace}/> : <OperationsWorkspace />)}
       {normalizedSection === "inventory" && (mode === "supabase" && workspace ? <ProductionInventoryWorkspace workspace={workspace}/> : <InventoryWorkspace />)}
       {normalizedSection === "profit" && <ProfitWorkspace />}
