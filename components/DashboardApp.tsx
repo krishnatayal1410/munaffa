@@ -27,12 +27,26 @@ const demoMetrics = [
 
 const workspaceRoles: Role[] = ["owner", "manager", "front-desk", "cashier", "waiter", "kitchen", "inventory"];
 const moduleOptions = ["Revenue & analytics", "Orders / bookings", "Inventory & cost", "Kitchen / service operations", "Guests & CRM", "AI insights"];
+const sectionModules: Record<string, string[]> = {
+  operations: ["Orders / bookings", "Kitchen / service operations"],
+  inventory: ["Inventory & cost"],
+  profit: ["Revenue & analytics"],
+  guests: ["Guests & CRM"],
+  ai: ["AI insights"],
+};
+
+function sectionIsEnabled(key: string, workspace: WorkspaceContext | null) {
+  if (key === "overview" || key === "settings") return true;
+  if (!workspace || workspace.enabledModules.length === 0) return true;
+  return (sectionModules[key] || []).some((module) => workspace.enabledModules.includes(module));
+}
 
 export function DashboardApp({ section = "overview" }: { section?: string }) {
   const router = useRouter();
   const [user, setUser] = useState<DemoUser | null>(null);
   const [menu, setMenu] = useState(false);
   const [tourStep, setTourStep] = useState(-1);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [workspace, setWorkspace] = useState<WorkspaceContext | null>(null);
   const [loading, setLoading] = useState(true);
   const mode = backendMode();
@@ -62,20 +76,21 @@ export function DashboardApp({ section = "overview" }: { section?: string }) {
     router.push("/");
   }
 
-  const normalizedSection = navigation.some(([key]) => key === section) ? section : "overview";
+  const visibleNavigation = navigation.filter(([key]) => sectionIsEnabled(key, workspace));
+  const normalizedSection = visibleNavigation.some(([key]) => key === section) ? section : "overview";
   const sectionTitle = navigation.find(([key]) => key === normalizedSection)?.[1] ?? "Overview";
 
   return <main className="dashboard-layout">
     <aside className={`dashboard-sidebar ${menu ? "open" : ""}`}>
       <div className="brand"><span className="brand-glyph">M</span><span><b>munaffa</b><small>Hospitality Profit OS</small></span></div>
       <div className="workspace-chip"><span>{workspace?.organizationName?.slice(0, 1) || "M"}</span><div><b>{workspace?.organizationName || "Demo Hospitality"}</b><small>{workspace?.propertyName || "Sample property"}</small></div></div>
-      <nav>{navigation.map(([key, label, Icon]) => <Link key={key} href={`/app/${key === "overview" ? "" : key}`} className={normalizedSection === key ? "active" : ""} onClick={() => setMenu(false)}><Icon size={17}/>{label}</Link>)}</nav>
+      <nav>{visibleNavigation.map(([key, label, Icon]) => <Link key={key} href={`/app/${key === "overview" ? "" : key}`} className={normalizedSection === key ? "active" : ""} onClick={() => setMenu(false)}><Icon size={17}/>{label}</Link>)}</nav>
       <button className="sidebar-signout" onClick={() => void signOut()}><LogOut size={16}/>Sign out</button>
     </aside>
 
     <section className="dashboard-main">
-      <header className="dashboard-topbar"><button className="mobile-dashboard-menu" onClick={() => setMenu((value) => !value)} aria-label="Toggle workspace navigation">{menu ? <X/> : <Menu/>}</button><div><small>{mode === "supabase" ? "Production account" : "Guided sample workspace"}</small><h1>{sectionTitle}</h1></div><div className="top-actions"><button aria-label="Notifications"><Bell size={17}/></button><span>{user.name.slice(0, 1).toUpperCase()}</span></div></header>
-      {normalizedSection === "overview" && <Overview mode={mode} />}
+      <header className="dashboard-topbar"><button className="mobile-dashboard-menu" onClick={() => setMenu((value) => !value)} aria-label="Toggle workspace navigation">{menu ? <X/> : <Menu/>}</button><div><small>{mode === "supabase" ? "Production account" : "Guided sample workspace"}</small><h1>{sectionTitle}</h1></div><div className="top-actions"><div className="notification-wrap"><button aria-label="Notifications" aria-expanded={notificationsOpen} onClick={() => setNotificationsOpen((open) => !open)}><Bell size={17}/><i className="notification-dot" /></button>{notificationsOpen && <NotificationPopover mode={mode} onClose={() => setNotificationsOpen(false)} />}</div><span>{user.name.slice(0, 1).toUpperCase()}</span></div></header>
+      {normalizedSection === "overview" && <Overview mode={mode} workspace={workspace} />}
       {normalizedSection === "operations" && <OperationsWorkspace />}
       {normalizedSection === "inventory" && <InventoryWorkspace />}
       {normalizedSection === "profit" && <ProfitWorkspace />}
@@ -88,8 +103,24 @@ export function DashboardApp({ section = "overview" }: { section?: string }) {
   </main>;
 }
 
-function Overview({ mode }: { mode: "supabase" | "demo" }) {
-  return <div className="dashboard-content"><div className="welcome-row"><div><span className="kicker">{mode === "supabase" ? "Connected account" : "Interactive sample"}</span><h2>See the whole business before it becomes a problem.</h2><p>{mode === "supabase" ? "Your account and workspace setup are persisted. The operational values remain illustrative until POS, PMS, inventory and payment sources are connected." : "Use the left navigation to change service status, recount inventory, model contribution, resolve guest feedback and ask the sample Munaffa AI."}</p></div><Link href="/app/operations" className="pill primary">Explore live sample</Link></div><div className="metric-row">{demoMetrics.map(([label,value,change]) => <article key={label}><small>{label}</small><b>{value}</b><em>{change} · Illustrative</em></article>)}</div><div className="dashboard-grid"><article className="chart-card"><header><div><small>Revenue + contribution</small><b>Last 7 days · Illustrative</b></div><ChartNoAxesCombined size={18}/></header><div className="fake-chart">{[32,52,41,66,58,78,88,71,91,76,95,86].map((height,index)=><i key={index} style={{height:`${height}%`}} />)}</div></article><article className="attention-card"><header><PackageSearch size={18}/><div><small>Needs attention</small><b>Operational signals</b></div></header>{["High-volume ingredient variance", "Weekend demand above baseline", "Three service requests delayed", "Supplier cost increased"].map((signal,index)=><div key={signal}><span className={index===0?"danger-dot":"warn-dot"}/><b>{signal}</b><small>Illustrative signal</small></div>)}</article></div><div className="overview-next"><Link href="/app/operations"><Building2 size={18}/><span><b>Operate the sample</b><small>Advance rooms, orders and guest-service work.</small></span>→</Link><Link href="/app/inventory"><Boxes size={18}/><span><b>Recount inventory</b><small>See theoretical-vs-physical variance change.</small></span>→</Link><Link href="/app/profit"><CircleDollarSign size={18}/><span><b>Model contribution</b><small>Change revenue and cost assumptions interactively.</small></span>→</Link></div></div>;
+function NotificationPopover({ mode, onClose }: { mode: "supabase" | "demo"; onClose: () => void }) {
+  const items = [
+    ["Inventory variance needs review", "Compare theoretical and physical count before assigning a cause."],
+    ["Service queue has high-priority work", "Two sample tasks are marked high priority and not complete."],
+    ["Supplier cost signal moved", "Illustrative purchase-cost movement should be checked against recent invoices."],
+  ];
+  return <div className="notification-popover" role="dialog" aria-label="Notifications"><header><div><small>{mode === "supabase" ? "Workspace signals" : "Sample signals"}</small><b>Needs attention</b></div><button type="button" aria-label="Close notifications" onClick={onClose}>×</button></header>{items.map(([title, copy], index) => <article key={title}><i className={index === 0 ? "danger-dot" : "warn-dot"}/><div><b>{title}</b><span>{copy}</span><em>Illustrative</em></div></article>)}<Link href="/app/operations" onClick={onClose}>Open workspace →</Link></div>;
+}
+
+function Overview({ mode, workspace }: { mode: "supabase" | "demo"; workspace: WorkspaceContext | null }) {
+  const quickLinks = [
+    { key: "operations", href: "/app/operations", icon: Building2, title: "Operate the sample", copy: "Advance rooms, orders and guest-service work." },
+    { key: "inventory", href: "/app/inventory", icon: Boxes, title: "Recount inventory", copy: "See theoretical-vs-physical variance change." },
+    { key: "profit", href: "/app/profit", icon: CircleDollarSign, title: "Model contribution", copy: "Change revenue and cost assumptions interactively." },
+  ].filter((item) => sectionIsEnabled(item.key, workspace));
+  const firstHref = quickLinks[0]?.href || "/app/settings";
+
+  return <div className="dashboard-content"><div className="welcome-row"><div><span className="kicker">{mode === "supabase" ? "Connected account" : "Interactive sample"}</span><h2>See the whole business before it becomes a problem.</h2><p>{mode === "supabase" ? "Your account and workspace setup are persisted. The operational values remain illustrative until POS, PMS, inventory and payment sources are connected." : "Use the enabled modules to change service status, recount inventory, model contribution, resolve guest feedback and explore sample intelligence."}</p></div><Link href={firstHref} className="pill primary">Explore workspace</Link></div><div className="metric-row">{demoMetrics.map(([label,value,change]) => <article key={label}><small>{label}</small><b>{value}</b><em>{change} · Illustrative</em></article>)}</div><div className="dashboard-grid"><article className="chart-card"><header><div><small>Revenue + contribution</small><b>Last 7 days · Illustrative</b></div><ChartNoAxesCombined size={18}/></header><div className="fake-chart">{[32,52,41,66,58,78,88,71,91,76,95,86].map((height,index)=><i key={index} style={{height:`${height}%`}} />)}</div></article><article className="attention-card"><header><PackageSearch size={18}/><div><small>Needs attention</small><b>Operational signals</b></div></header>{["High-volume ingredient variance", "Weekend demand above baseline", "Three service requests delayed", "Supplier cost increased"].map((signal,index)=><div key={signal}><span className={index===0?"danger-dot":"warn-dot"}/><b>{signal}</b><small>Illustrative signal</small></div>)}</article></div>{quickLinks.length > 0 && <div className="overview-next">{quickLinks.map(({ href, icon: Icon, title, copy }) => <Link key={href} href={href}><Icon size={18}/><span><b>{title}</b><small>{copy}</small></span>→</Link>)}</div>}</div>;
 }
 
 function SettingsView({ user, mode, workspace, onUserChange, onWorkspaceChange }: { user: DemoUser; mode: "supabase" | "demo"; workspace: WorkspaceContext | null; onUserChange: (user: DemoUser) => void; onWorkspaceChange: (workspace: WorkspaceContext | null) => void }) {
