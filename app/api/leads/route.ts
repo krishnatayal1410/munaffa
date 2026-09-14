@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
+const MAX_BODY_BYTES = 16_000;
+
 const leadSchema = z.object({
   name: z.string().trim().min(2).max(100),
   email: z.string().trim().email().max(200),
@@ -14,7 +16,27 @@ const leadSchema = z.object({
   website: z.string().max(0).optional(),
 });
 
+function sameOriginRequest(request: Request) {
+  const origin = request.headers.get("origin");
+  const host = request.headers.get("host");
+  if (!origin || !host) return true;
+  try {
+    return new URL(origin).host === host;
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(request: Request) {
+  if (!sameOriginRequest(request)) {
+    return NextResponse.json({ error: "Cross-origin submission rejected." }, { status: 403 });
+  }
+
+  const contentLength = Number(request.headers.get("content-length") || 0);
+  if (contentLength > MAX_BODY_BYTES) {
+    return NextResponse.json({ error: "Request is too large." }, { status: 413 });
+  }
+
   let payload: unknown;
   try {
     payload = await request.json();
@@ -27,6 +49,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message || "Check the form and try again." }, { status: 400 });
   }
 
+  // Honeypot bots receive a neutral success so the endpoint does not reveal the trap.
   if (parsed.data.website) {
     return NextResponse.json({ ok: true });
   }
