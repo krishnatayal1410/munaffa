@@ -11,6 +11,7 @@ import { ProductionOperationsWorkspace } from "@/components/ProductionOperations
 import { ProductionInventoryWorkspace } from "@/components/ProductionInventoryWorkspace";
 import { ProductionGuestsWorkspace } from "@/components/ProductionGuestsWorkspace";
 import { ProductionOverviewWorkspace } from "@/components/ProductionOverviewWorkspace";
+import { ProductionProfitWorkspace } from "@/components/ProductionProfitWorkspace";
 
 const navigation = [
   ["overview", "Overview", House],
@@ -41,6 +42,7 @@ const sectionModules: Record<string, string[]> = {
 
 function sectionIsEnabled(key: string, workspace: WorkspaceContext | null) {
   if (key === "overview" || key === "settings") return true;
+  if (key === "profit" && workspace?.organizationId && !["owner", "manager", "cashier"].includes(workspace.authorizationRole)) return false;
   if (!workspace || workspace.enabledModules.length === 0) return true;
   return (sectionModules[key] || []).some((module) => workspace.enabledModules.includes(module));
 }
@@ -103,7 +105,7 @@ export function DashboardApp({ section = "overview" }: { section?: string }) {
       {normalizedSection === "overview" && (mode === "supabase" && workspace ? <ProductionOverviewWorkspace workspace={workspace}/> : <Overview mode={mode} workspace={workspace} />)}
       {normalizedSection === "operations" && (mode === "supabase" && workspace ? <ProductionOperationsWorkspace workspace={workspace}/> : <OperationsWorkspace />)}
       {normalizedSection === "inventory" && (mode === "supabase" && workspace ? <ProductionInventoryWorkspace workspace={workspace}/> : <InventoryWorkspace />)}
-      {normalizedSection === "profit" && <ProfitWorkspace />}
+      {normalizedSection === "profit" && (mode === "supabase" && workspace ? <ProductionProfitWorkspace workspace={workspace}/> : <ProfitWorkspace />)}
       {normalizedSection === "guests" && (mode === "supabase" && workspace ? <ProductionGuestsWorkspace workspace={workspace}/> : <GuestsWorkspace />)}
       {normalizedSection === "ai" && <AIWorkspace />}
       {normalizedSection === "settings" && <SettingsView user={user} mode={mode} workspace={workspace} onUserChange={setUser} onWorkspaceChange={setWorkspace} />}
