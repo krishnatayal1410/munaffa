@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type ExperienceScene = "hero" | "problem" | "platform" | "industries" | "intelligence" | "proof" | "final";
+export type ExperienceScene = "hero" | "problem" | "platform" | "industries" | "intelligence" | "proof" | "simulator" | "final";
 
 type ExperienceState = {
   scene: ExperienceScene;
