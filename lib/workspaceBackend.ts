@@ -115,6 +115,33 @@ export async function saveWorkspaceSetup(state: SetupState) {
   return { mode: "supabase" as const };
 }
 
+export async function saveWorkspaceConfiguration(state: SetupState) {
+  const client = getSupabaseBrowserClient();
+  if (!client) {
+    saveDemoSetup(state);
+    return { mode: "demo" as const };
+  }
+
+  const { data: authData, error: authError } = await client.auth.getUser();
+  if (authError || !authData.user) throw new Error("Your session expired. Please sign in again.");
+
+  const { error } = await client.rpc("save_workspace_configuration", {
+    p_organization_name: state.organizationName,
+    p_hospitality_type: state.hospitalityType,
+    p_role: state.role,
+    p_property_name: state.propertyName,
+    p_city: state.city,
+    p_enabled_modules: state.enabledModules,
+  });
+  if (error) {
+    if (/function .*save_workspace_configuration/i.test(error.message) || /could not find.*function/i.test(error.message)) {
+      throw new Error("Workspace settings need the latest database migration. Apply Supabase migrations through 009.");
+    }
+    throw new Error(error.message);
+  }
+  return { mode: "supabase" as const };
+}
+
 export async function updateWorkspaceProfile(input: { name: string }) {
   const name = input.name.trim();
   if (name.length < 2 || name.length > 80) {
