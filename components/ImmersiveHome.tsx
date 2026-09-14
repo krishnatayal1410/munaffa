@@ -5,6 +5,7 @@ import { BarChart3, BrainCircuit, Building2, Coffee, Hotel, Layers3, ShieldCheck
 import { industries } from "@/lib/content";
 import { HospitalityWorld } from "./HospitalityWorld";
 import { ExperienceController } from "./ExperienceController";
+import { ProfitLeakSimulator } from "./ProfitLeakSimulator";
 import { StoryProgress } from "./StoryProgress";
 import { WorldLoader } from "./WorldLoader";
 import { useExperience } from "@/lib/experience";
@@ -49,7 +50,9 @@ export function ImmersiveHome() {
 
       <section className="experience-scene align-right" data-scene="proof"><div className="experience-copy"><span className="kicker"><BarChart3 size={14}/> Live operating view</span><h2>One command center.<br/><em>Less guesswork.</em></h2><div className="command-preview">{["Revenue", "Occupancy / Covers", "Food Cost", "Low Stock", "Guest Sentiment", "Potential Variance"].map((x, i) => <div key={x}><small>{x}</small><b>{["₹8.42L", "78%", "31.4%", "6 items", "4.6/5", "Review"][i]}</b><em>Demo</em></div>)}</div><p className="truth-note"><ShieldCheck size={14}/> Demo values are labelled. Production insights require verified business data.</p></div></section>
 
-      <section className="experience-scene final-scene" data-scene="final"><div className="experience-copy centered"><span className="kicker">A more profitable hospitality tomorrow</span><h2>Run hospitality on <em>visibility, not guesswork.</em></h2><p>Start with a guided sample workspace, then configure your real property or outlet when you are ready.</p><div className="cta-row centered-row"><Link className="pill primary" href="/auth/sign-up">Create your workspace</Link><Link className="pill ghost" href="/auth/sign-in">Open demo</Link></div></div></section>
+      <section className="experience-scene simulator-scene" data-scene="simulator"><ProfitLeakSimulator /></section>
+
+      <section className="experience-scene final-scene" data-scene="final"><div className="experience-copy centered"><span className="kicker">A more profitable hospitality tomorrow</span><h2>Run hospitality on <em>visibility, not guesswork.</em></h2><p>Start with a guided sample workspace, then configure your real property or outlet when you are ready.</p><div className="cta-row centered-row"><Link className="pill primary" href="/auth/sign-up">Create your workspace</Link><Link className="pill ghost" href="/demo">Request guided demo</Link></div></div></section>
     </main>
   </>;
 }
