@@ -6,6 +6,7 @@ import {
   readDemoProfile,
   readDemoSetup,
   saveDemoSetup,
+  writeDemoProfile,
   type SetupState,
 } from "./demoWorkspace";
 import { getSupabaseBrowserClient, hasProductionBackend } from "./supabase";
@@ -93,6 +94,49 @@ export async function saveWorkspaceSetup(state: SetupState) {
 
   if (error) throw new Error(error.message);
   return { mode: "supabase" as const };
+}
+
+export async function updateWorkspaceProfile(input: { name: string }) {
+  const name = input.name.trim();
+  if (name.length < 2 || name.length > 80) {
+    throw new Error("Name must be between 2 and 80 characters.");
+  }
+
+  const client = getSupabaseBrowserClient();
+  if (!client) {
+    const current = readDemoProfile();
+    if (!current) throw new Error("No sample profile is available.");
+    const next = { ...current, name };
+    writeDemoProfile(next);
+    return { mode: "demo" as const, user: next };
+  }
+
+  const { data: authData, error: authError } = await client.auth.getUser();
+  if (authError || !authData.user) {
+    throw new Error("Your session expired. Please sign in again.");
+  }
+
+  const { error: metadataError } = await client.auth.updateUser({
+    data: { full_name: name, name },
+  });
+  if (metadataError) throw new Error(metadataError.message);
+
+  const { error: profileError } = await client.from("user_profiles").upsert({
+    id: authData.user.id,
+    full_name: name,
+    updated_at: new Date().toISOString(),
+  });
+  if (profileError) throw new Error(profileError.message);
+
+  return {
+    mode: "supabase" as const,
+    user: {
+      id: authData.user.id,
+      name,
+      email: authData.user.email || "",
+      onboardingComplete: true,
+    } satisfies DemoUser,
+  };
 }
 
 export async function signOutCurrentUser() {
