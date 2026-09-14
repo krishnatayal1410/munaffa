@@ -6,12 +6,18 @@ type ExperienceState = {
   progress: number;
   scene: number;
   localProgress: number;
-  update: (next: Partial<Pick<ExperienceState, "progress" | "scene" | "localProgress">>) => void;
+  pointerX: number;
+  pointerY: number;
+  reducedMotion: boolean;
+  update: (next: Partial<Omit<ExperienceState, "update">>) => void;
 };
 
 export const useExperience = create<ExperienceState>((set) => ({
   progress: 0,
   scene: 0,
   localProgress: 0,
+  pointerX: 0,
+  pointerY: 0,
+  reducedMotion: false,
   update: (next) => set(next)
 }));

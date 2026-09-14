@@ -1,6 +1,6 @@
 {
-  "name": "munaffa-immersive-home",
-  "version": "0.1.0",
+  "name": "munaffa-immersive-world",
+  "version": "1.0.0",
   "private": true,
   "engines": { "node": "22.x" },
   "scripts": {
