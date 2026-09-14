@@ -28,7 +28,7 @@ export const marketingPages: Record<string, { kicker: string; title: string; cop
   pricing: {
     kicker: "Validation pricing",
     title: "Start lean. Add intelligence as you grow.",
-    copy: "These tiers are working validation prices and will change as real pilots establish willingness-to-pay.",
+    copy: "These tiers are working validation prices and will change as real pilots establish willingness-to-pay. No plan is presented as proven market pricing yet.",
     cards: [
       { title: "Launch — ₹999/mo", text: "Core ordering/service flows, basic operations and analytics for one location." },
       { title: "Growth — ₹2,499/mo", text: "Inventory, recipes, KDS/ops controls, advanced reports and guest workflows." },
@@ -53,6 +53,26 @@ export const marketingPages: Record<string, { kicker: string; title: string; cop
       { title: "India first", text: "Start close to customers, learn quickly and solve real owner-led hospitality workflows." },
       { title: "Evidence over hype", text: "Demo values are labelled. Variance is not called theft. AI signals require real data validation." },
       { title: "One connected flow", text: "Avoid another isolated dashboard by connecting activity to cost, guest and profit outcomes." },
+    ],
+  },
+  demo: {
+    kicker: "Guided product demo",
+    title: "Show us how your hospitality business actually runs.",
+    copy: "Request a focused Munaffa walkthrough around the problems you care about: operations, inventory, cost control, guest workflows, profit visibility or multi-location management.",
+    cards: [
+      { title: "Your workflow first", text: "The conversation starts with how your team currently handles rooms, orders, kitchen, stock, billing and reporting." },
+      { title: "No fake ROI", text: "Sample values are illustrative. Any savings or profit opportunity should be calculated from your verified operating data." },
+      { title: "Pilot-ready", text: "If the fit is strong, define a narrow design-partner pilot rather than forcing a full rollout immediately." },
+    ],
+  },
+  contact: {
+    kicker: "Contact",
+    title: "Talk to the team building Munaffa.",
+    copy: "Use this for pilot interest, product questions, integrations, partnerships or feedback from hospitality operators.",
+    cards: [
+      { title: "Operators", text: "Tell us where your team loses time, stock visibility or profit clarity today." },
+      { title: "Pilot partners", text: "Work with Munaffa on a small, measurable workflow before committing to a larger rollout." },
+      { title: "Integrations", text: "Discuss POS, PMS, payment, accounting, supplier or operational data connections." },
     ],
   },
 };
