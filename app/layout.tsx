@@ -5,7 +5,7 @@ import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const sora = Sora({ subsets: ["latin"], variable: "--font-sora", display: "swap" });
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://munaffa.vercel.app";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://munaffa-krishnatayal1410s-projects.vercel.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
