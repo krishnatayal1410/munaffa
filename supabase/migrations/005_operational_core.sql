@@ -100,6 +100,87 @@ create table if not exists public.guest_feedback (
   check (recovery_status not in ('resolved','closed') or resolved_at is not null)
 );
 
+-- Keep tenant and authorship identity immutable while automatically maintaining lifecycle timestamps.
+create or replace function public.maintain_operational_task()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  if tg_op = 'UPDATE' then
+    if new.organization_id <> old.organization_id
+      or new.property_id <> old.property_id
+      or new.created_by <> old.created_by then
+      raise exception 'Task tenant and creator identity are immutable';
+    end if;
+  end if;
+
+  if new.status = 'complete' then
+    new.completed_at := coalesce(new.completed_at, now());
+  else
+    new.completed_at := null;
+  end if;
+  new.updated_at := now();
+  return new;
+end;
+$$;
+
+create or replace function public.maintain_inventory_item()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  if tg_op = 'UPDATE' and (
+    new.organization_id <> old.organization_id
+    or new.property_id <> old.property_id
+  ) then
+    raise exception 'Inventory item tenant identity is immutable';
+  end if;
+  new.updated_at := now();
+  return new;
+end;
+$$;
+
+create or replace function public.maintain_guest_feedback()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  if tg_op = 'UPDATE' then
+    if new.organization_id <> old.organization_id
+      or new.property_id <> old.property_id
+      or new.created_by <> old.created_by then
+      raise exception 'Feedback tenant and creator identity are immutable';
+    end if;
+  end if;
+
+  if new.recovery_status in ('resolved','closed') then
+    new.resolved_at := coalesce(new.resolved_at, now());
+  else
+    new.resolved_at := null;
+  end if;
+  new.updated_at := now();
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_operational_task_lifecycle on public.operational_tasks;
+create trigger trg_operational_task_lifecycle
+before insert or update on public.operational_tasks
+for each row execute function public.maintain_operational_task();
+
+drop trigger if exists trg_inventory_item_updated_at on public.inventory_items;
+create trigger trg_inventory_item_updated_at
+before update on public.inventory_items
+for each row execute function public.maintain_inventory_item();
+
+drop trigger if exists trg_guest_feedback_lifecycle on public.guest_feedback;
+create trigger trg_guest_feedback_lifecycle
+before insert or update on public.guest_feedback
+for each row execute function public.maintain_guest_feedback();
+
 create index if not exists idx_operational_tasks_org_property_status
   on public.operational_tasks(organization_id, property_id, status);
 create index if not exists idx_operational_tasks_assigned_to
@@ -130,6 +211,13 @@ create policy "operational_tasks_insert_member" on public.operational_tasks
     public.is_org_member(organization_id)
     and public.property_belongs_to_org(property_id, organization_id)
     and created_by = auth.uid()
+    and (
+      assigned_to is null or exists (
+        select 1 from public.organization_members m
+        where m.organization_id = operational_tasks.organization_id
+          and m.user_id = operational_tasks.assigned_to
+      )
+    )
   );
 create policy "operational_tasks_update_member" on public.operational_tasks
   for update using (
@@ -138,6 +226,13 @@ create policy "operational_tasks_update_member" on public.operational_tasks
   ) with check (
     public.is_org_member(organization_id)
     and public.property_belongs_to_org(property_id, organization_id)
+    and (
+      assigned_to is null or exists (
+        select 1 from public.organization_members m
+        where m.organization_id = operational_tasks.organization_id
+          and m.user_id = operational_tasks.assigned_to
+      )
+    )
   );
 create policy "operational_tasks_delete_management" on public.operational_tasks
   for delete using (public.is_org_manager(organization_id));
@@ -174,23 +269,12 @@ create policy "inventory_counts_insert_inventory" on public.inventory_counts
     and counted_by = auth.uid()
     and exists (
       select 1 from public.inventory_items i
-      where i.id = inventory_item_id
-        and i.organization_id = organization_id
-        and i.property_id = property_id
+      where i.id = inventory_counts.inventory_item_id
+        and i.organization_id = inventory_counts.organization_id
+        and i.property_id = inventory_counts.property_id
     )
   );
-create policy "inventory_counts_update_inventory" on public.inventory_counts
-  for update using (public.has_org_role(organization_id, array['owner','manager','inventory']))
-  with check (
-    public.has_org_role(organization_id, array['owner','manager','inventory'])
-    and public.property_belongs_to_org(property_id, organization_id)
-    and exists (
-      select 1 from public.inventory_items i
-      where i.id = inventory_item_id
-        and i.organization_id = organization_id
-        and i.property_id = property_id
-    )
-  );
+-- Counts are append-only audit events. Corrections create a new count; only management may delete a bad event.
 create policy "inventory_counts_delete_management" on public.inventory_counts
   for delete using (public.is_org_manager(organization_id));
 
@@ -205,12 +289,26 @@ create policy "guest_feedback_insert_member" on public.guest_feedback
     public.is_org_member(organization_id)
     and public.property_belongs_to_org(property_id, organization_id)
     and created_by = auth.uid()
+    and (
+      assigned_to is null or exists (
+        select 1 from public.organization_members m
+        where m.organization_id = guest_feedback.organization_id
+          and m.user_id = guest_feedback.assigned_to
+      )
+    )
   );
 create policy "guest_feedback_update_recovery" on public.guest_feedback
   for update using (public.has_org_role(organization_id, array['owner','manager','front-desk']))
   with check (
     public.has_org_role(organization_id, array['owner','manager','front-desk'])
     and public.property_belongs_to_org(property_id, organization_id)
+    and (
+      assigned_to is null or exists (
+        select 1 from public.organization_members m
+        where m.organization_id = guest_feedback.organization_id
+          and m.user_id = guest_feedback.assigned_to
+      )
+    )
   );
 create policy "guest_feedback_delete_management" on public.guest_feedback
   for delete using (public.is_org_manager(organization_id));
