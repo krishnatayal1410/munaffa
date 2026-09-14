@@ -3,7 +3,7 @@ import type { MetadataRoute } from "next";
 const publicRoutes = ["", "/product", "/industries", "/pricing", "/resources", "/about", "/demo", "/contact", "/privacy", "/terms"];
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = (process.env.NEXT_PUBLIC_SITE_URL || "https://munaffa.vercel.app").replace(/\/$/, "");
+  const base = (process.env.NEXT_PUBLIC_SITE_URL || "https://munaffa-krishnatayal1410s-projects.vercel.app").replace(/\/$/, "");
   const now = new Date();
   return publicRoutes.map((route, index) => ({
     url: `${base}${route}`,
