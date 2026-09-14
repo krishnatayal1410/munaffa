@@ -1,38 +1,97 @@
 # Munaffa — Hospitality Profit OS
 
-Munaffa is being rebuilt as an AI-powered operating system for hospitality businesses: hotels, restaurants, cafés/QSRs, cloud kitchens, resorts, bars/lounges and related operators.
+Munaffa is an AI-powered operating-system concept for hospitality businesses: hotels, restaurants, cafés/QSRs, cloud kitchens, resorts, bars/lounges and related operators.
 
-## Included in this rebuild
+The current repository contains both a cinematic public website and an interactive product workspace. Demo/illustrative values are intentionally labelled and are not presented as real customer results.
 
-- Cinematic scroll-driven marketing homepage
-- Persistent React Three Fiber world
-- Real licensed furniture models instead of primitive box furniture
-- Hotel, restaurant, café and operations visual stages
-- HDRI environment lighting
-- Multi-industry product positioning
-- Product / Industries / Pricing / Resources / About pages
-- Sign up, sign in and password-reset UX
-- Persistent browser demo profile
-- Four-step onboarding wizard
-- Hospitality type + role selection
-- Property/outlet setup
+## What is implemented
+
+### Public experience
+- Immersive scroll-driven homepage with GSAP ScrollTrigger
+- Persistent React Three Fiber hospitality world
+- Architectural hotel, restaurant, café, operations and profit-command zones
+- Real CC0 furniture assets instead of primitive furniture
+- Poly Haven CC0 HDR environment lighting
+- Curved scroll-driven camera path and operational data-flow particles
+- Adaptive desktop/mobile rendering quality
+- WebGL detection and graceful fallback
+- System + manual reduced-motion support
+- Story-progress navigation rail
+- Product, Industries, Pricing, Resources, About, Demo and Contact pages
+- Privacy and Terms launch-stage drafts
+- Page-level metadata
+- Responsive navigation and footer
+
+### Account + onboarding
+- Sign up / sign in
+- Forgot-password + secure update-password flow
+- Four-step onboarding
+- Hospitality business type selection
+- Role selection
+- Property/outlet creation
+- Module selection
 - Guided first-run tutorial
-- Working dashboard shell
-- Operations, inventory, profit, guests, AI and settings modules
-- Honest demo-data labeling
-- Reduced-motion support and responsive layouts
 
-## Production boundary
+### Interactive workspace
+- Overview
+- Operations queue with state transitions
+- Inventory recount with theoretical-vs-physical variance
+- Interactive contribution/profit model
+- Guest-feedback / service-recovery flow
+- Deterministic sample Munaffa AI console
+- Settings sample state
 
-The current authentication/session implementation is intentionally a local browser demo. It makes the full flow testable without pretending that a secure backend exists. Before public launch, replace `lib/demoWorkspace.ts` with production authentication and persistence, then connect verified property data and integrations.
+### Production backend path
+The same UI automatically switches between two modes:
+
+1. **Demo mode** — when Supabase environment variables are absent, safe local browser demo state is used.
+2. **Production account mode** — when Supabase is configured, authentication and workspace setup use Supabase.
+
+Implemented backend building blocks:
+- Supabase browser auth adapter
+- User/workspace backend abstraction
+- Organization, membership, property and workspace settings schema
+- Row Level Security and hardened membership helpers
+- Server-side validated demo/contact lead API
+- Protected `demo_requests` table
+
+Operational POS/PMS/payment/inventory integrations are **not** implemented yet. Dashboard operating metrics remain illustrative until verified external data is connected.
+
+## Environment variables
+
+Copy `.env.example` and configure as needed:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+```
+
+`SUPABASE_SERVICE_ROLE_KEY` is server-only. Never expose it through a `NEXT_PUBLIC_` variable or client component.
+
+## Supabase setup
+
+Create a Supabase project and apply the migrations in order:
+
+```text
+supabase/migrations/001_initial_workspace.sql
+supabase/migrations/002_rls_hardening.sql
+supabase/migrations/003_demo_requests.sql
+```
+
+Then configure the public URL/anon key for account auth and the server-only service-role key for demo/contact lead storage.
+
+Configure the appropriate Site URL / redirect URLs in Supabase Auth for the production domain before enabling email confirmation/password recovery.
 
 ## 3D asset provenance
 
-The current web prototype loads furniture assets from the public `Teetertater/Floorplan2Walkthru` repository. That project documents its furniture library as CC-licensed and identifies Poly Haven as a source for a subset of its assets. The HDR environment is `warm_restaurant` from Poly Haven.
+See [`THIRD_PARTY_ASSETS.md`](./THIRD_PARTY_ASSETS.md).
 
-Before commercial hardening, vendor every approved model and texture into Munaffa-controlled storage, optimize it for the web, and retain exact per-asset license records instead of depending on third-party raw URLs.
+The current development build references 1K model files from a public GitHub mirror whose asset identifiers correspond to Poly Haven CC0 assets. Before significant production traffic, download approved source assets from Poly Haven, optimize them, and host them in Munaffa-controlled storage/CDN rather than depending on third-party raw URLs.
 
 ## Development
+
+Requirements: Node.js 22+
 
 ```bash
 npm install
@@ -41,19 +100,37 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-Production checks:
+Production verification:
 
 ```bash
 npm run typecheck
 npm run build
 ```
 
-## Launch-critical work after design approval
+GitHub Actions runs both checks on every `main` push. Stale in-progress builds are cancelled automatically.
 
-1. Vendor and optimize final GLB/glTF assets using Draco/Meshopt/KTX2 where useful.
-2. Connect real production authentication and role-based access.
-3. Add persistent data for organizations, properties/outlets, users, rooms/services/menu, orders/bookings, inventory, costs, payments and guest profiles.
-4. Replace demo analytics with verified event/data pipelines.
-5. Add payment, POS, channel-manager and supplier integrations only when actually implemented.
-6. Test the 3D experience on physical low/mid/high-end mobile and desktop GPUs.
-7. Build the mobile app against the same domain/API contracts after the web experience and product flow are approved.
+## Vercel deployment
+
+The repository is production-buildable, but deploying still requires an authorized Vercel project/account connection.
+
+Recommended production configuration:
+1. Import `krishnatayal1410/munaffa` into Vercel.
+2. Use Node.js 22.
+3. Add the required environment variables in Production and Preview as appropriate.
+4. Set the production domain.
+5. Update Supabase Auth Site URL and allowed redirect URLs to that domain.
+6. Deploy `main` only after GitHub CI is green.
+7. Test sign-up, email confirmation, sign-in, password reset, onboarding and `/api/leads` end to end.
+
+## Still required before accepting paying customers
+
+- Run the SQL migrations in a real Supabase project and perform an RLS/security review.
+- Connect verified POS/PMS/order/payment/inventory sources rather than sample metrics.
+- Add production audit logging and organization invitation/member management.
+- Add rate limiting / bot protection for public lead endpoints.
+- Add transactional email and support operations.
+- Vendor and optimize the final 3D asset set into first-party storage.
+- Test physical low/mid/high-end mobile and desktop GPUs.
+- Finalize Privacy Policy, Terms and commercial customer terms with legal counsel for the actual legal entity/jurisdictions.
+- Validate pricing with real design partners rather than treating the current tiers as proven willingness-to-pay.
+- Build the mobile app against the same domain/API contracts after the web product flow is locked.
