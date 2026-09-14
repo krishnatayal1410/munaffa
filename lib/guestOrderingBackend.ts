@@ -46,6 +46,15 @@ export type GuestOrderReceipt = {
   currency: string;
 };
 
+export type GuestOrderStatus = {
+  orderId: string;
+  status: string;
+  subtotal: number;
+  currency: string;
+  createdAt: string;
+  completedAt: string | null;
+};
+
 function requireProductionClient() {
   const client = getSupabaseBrowserClient();
   if (!client) throw new Error("Production ordering is not configured on this deployment.");
@@ -66,7 +75,7 @@ export async function listOrderingPoints(context: WorkspaceContext): Promise<Ord
     .eq("organization_id", organizationId)
     .eq("property_id", propertyId)
     .order("created_at", { ascending: false });
-  if (error) throw new Error(`${error.message}. Apply Supabase migration 011 to enable guest QR ordering.`);
+  if (error) throw new Error(`${error.message}. Apply Supabase migrations through 012 to enable guest QR ordering.`);
   return (data || []).map((row) => {
     const raw = row as Record<string, unknown>;
     return {
@@ -95,14 +104,24 @@ export async function createOrderingPoint(context: WorkspaceContext, input: {
     p_max_open_orders: input.maxOpenOrders,
   });
   if (error) throw new Error(error.message);
-  const raw = data as Record<string, unknown>;
+  return mapCreatedPoint(data as Record<string, unknown>, input.serviceType, input.maxOpenOrders);
+}
+
+export async function rotateOrderingPoint(context: WorkspaceContext, orderingPointId: string): Promise<CreatedOrderingPoint> {
+  const { client } = requireWorkspace(context);
+  const { data, error } = await client.rpc("rotate_ordering_point_token", { p_ordering_point_id: orderingPointId });
+  if (error) throw new Error(error.message);
+  return mapCreatedPoint(data as Record<string, unknown>, "other", 5);
+}
+
+function mapCreatedPoint(raw: Record<string, unknown>, fallbackServiceType: OrderingPointServiceType, fallbackLimit: number): CreatedOrderingPoint {
   return {
     id: String(raw.id),
     token: String(raw.token),
-    label: String(raw.label || label),
-    serviceType: String(raw.service_type || input.serviceType) as OrderingPointServiceType,
+    label: String(raw.label || "Ordering point"),
+    serviceType: String(raw.service_type || fallbackServiceType) as OrderingPointServiceType,
     active: true,
-    maxOpenOrders: Number(raw.max_open_orders || input.maxOpenOrders),
+    maxOpenOrders: Number(raw.max_open_orders || fallbackLimit),
     createdAt: new Date().toISOString(),
   };
 }
@@ -171,5 +190,20 @@ export async function submitGuestOrder(token: string, input: {
     lineCount: Number(raw.line_count || payload.length),
     subtotal: Number(raw.subtotal || 0),
     currency: String(raw.currency || "INR"),
+  };
+}
+
+export async function getGuestOrderStatus(token: string, orderId: string): Promise<GuestOrderStatus> {
+  const client = requireProductionClient();
+  const { data, error } = await client.rpc("get_guest_order_status", { p_token: token, p_order_id: orderId });
+  if (error) throw new Error(error.message);
+  const raw = data as Record<string, unknown>;
+  return {
+    orderId: String(raw.order_id),
+    status: String(raw.status || "new"),
+    subtotal: Number(raw.subtotal || 0),
+    currency: String(raw.currency || "INR"),
+    createdAt: String(raw.created_at || ""),
+    completedAt: raw.completed_at ? String(raw.completed_at) : null,
   };
 }
