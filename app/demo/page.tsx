@@ -1,2 +1,5 @@
 import { redirect } from "next/navigation";
-export default function DemoShortcut(){redirect("/meeting")}
+
+export default function LegacyDemoShortcut(){
+  redirect("/");
+}
