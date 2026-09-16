@@ -8,12 +8,22 @@ import "./pilot.css";
 import "./account.css";
 
 export const metadata: Metadata = {
-  title: "Munaffa — Immersive Hospitality Experience",
-  description: "A cinematic hospitality experience connecting venue, menu, AR-style dish exploration and profit visibility.",
+  title: {
+    default: "Munaffa — Restaurant Profit & Operations OS",
+    template: "%s | Munaffa"
+  },
+  description: "Munaffa connects guest ordering, kitchen operations, recipes, inventory, billing, CRM and profit intelligence in one operating system for restaurants and cafés.",
+  applicationName: "Munaffa",
+  keywords: ["restaurant management", "restaurant profit", "restaurant inventory", "QR ordering", "kitchen display system", "restaurant CRM", "food cost", "restaurant operations"],
   openGraph: {
-    title: "Munaffa — Immersive Hospitality Experience",
-    description: "Step inside a cinematic hospitality system built around real spaces and working interactions.",
+    title: "Munaffa — Restaurant Profit & Operations OS",
+    description: "Know where every rupee goes. Connect the guest order to kitchen, stock, billing, guest memory and profit visibility.",
     type: "website"
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Munaffa — Restaurant Profit & Operations OS",
+    description: "Guest order to profit visibility — one connected restaurant operating layer."
   }
 };
 

@@ -1,25 +1,24 @@
 "use client";
 
-import { ArrowDown, ArrowRight, Camera, CircleDollarSign, LayoutDashboard, QrCode, UtensilsCrossed } from "lucide-react";
+import { ArrowDown, ArrowRight, LayoutDashboard, QrCode, UtensilsCrossed } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useEffect, useRef } from "react";
-import { ARLens } from "@/components/ARLens";
 import { CinematicWorld } from "@/components/CinematicWorld";
 import { MenuExperience } from "@/components/MenuExperience";
 import { ProfitLens } from "@/components/ProfitLens";
 import { useExperience } from "@/lib/experience";
 
 const chapters = [
-  { eyebrow: "01 / ARRIVE", title: <>Hospitality should be<br/><em>felt before it is managed.</em></>, body: "Enter Munaffa through the venue itself. Scroll becomes the camera and the property becomes the interface." },
-  { eyebrow: "02 / PROPERTY", title: <>Move through the space.<br/><em>Not through slides.</em></>, body: "The camera travels through real-looking hospitality environments with perspective, depth and spatial continuity." },
-  { eyebrow: "03 / ORDER", title: <>The guest journey<br/><em>starts at the table.</em></>, body: "Guests can discover, order and request service without leaving the experience. The operating system begins at the same moment." },
-  { eyebrow: "04 / PRODUCT", title: <>Every dish is<br/><em>a product and a cost.</em></>, body: "Food is presented with the same visual theatre as a premium product launch while recipe and cost logic sit underneath it." },
-  { eyebrow: "05 / LENS", title: <>Point. Inspect.<br/><em>Understand what is served.</em></>, body: "Use the device camera for an AR-style ingredient experience, with clear fallback behaviour where camera access is unavailable." },
-  { eyebrow: "06 / OPERATIONS", title: <>Front of house.<br/><em>Back of house. One flow.</em></>, body: "Orders move into service and preparation, connecting the guest moment to kitchen execution and operating visibility." },
-  { eyebrow: "07 / INVENTORY", title: <>What should remain.<br/><em>What actually remains.</em></>, body: "Recipe-driven theoretical usage stays separate from physical stock counts so variance can be investigated instead of guessed." },
-  { eyebrow: "08 / PROFIT", title: <>Revenue is visible.<br/><em>Leakage should be too.</em></>, body: "Explore how waste, stock variance, discounts and operating friction can affect contribution without pretending assumptions are measured facts." },
-  { eyebrow: "09 / MUNAFFA OS", title: <>One hospitality system.<br/><em>From guest to profit.</em></>, body: "Ordering, kitchen, inventory, purchasing, finance and guest operations converge into one operating layer for hospitality businesses." }
+  { eyebrow: "01 / PROFIT OS", title: <>Know where<br/><em>every rupee goes.</em></>, body: "Munaffa connects the guest moment to the owner decision. Orders, recipes, stock, payments and guest activity become one operating story instead of disconnected tools." },
+  { eyebrow: "02 / GUEST ORDER", title: <>Har order ka<br/><em>asli munafa starts here.</em></>, body: "Guests order from the table without installing an app. The order is identified once, sent into operations, and kept connected all the way to billing and profitability." },
+  { eyebrow: "03 / KITCHEN", title: <>From table to kitchen.<br/><em>No broken handoff.</em></>, body: "The same order reaches the KDS with preparation state, timing and item detail. Front of house and kitchen work from one shared operational flow." },
+  { eyebrow: "04 / INVENTORY", title: <>What should remain.<br/><em>What actually remains.</em></>, body: "Recipe-driven theoretical usage stays separate from physical stock counts. Purchases, waste and variance can be investigated instead of guessed." },
+  { eyebrow: "05 / RECIPE ECONOMICS", title: <>Every dish is<br/><em>revenue and cost.</em></>, body: "Munaffa connects recipes, ingredient quantities and selling price so owners can see theoretical food cost and contribution at the dish level." },
+  { eyebrow: "06 / BILLING", title: <>Close the order.<br/><em>Keep the data connected.</em></>, body: "Billing and payment complete the same order identity, so revenue does not become a separate number disconnected from what was cooked and consumed." },
+  { eyebrow: "07 / GUEST MEMORY", title: <>A transaction can become<br/><em>a returning guest.</em></>, body: "Feedback, visit history and preference signals create a usable guest layer for retention, service recovery and repeat business." },
+  { eyebrow: "08 / PROFIT INTELLIGENCE", title: <>Revenue is visible.<br/><em>Leakage should be too.</em></>, body: "Waste, stock variance, discounting and recipe economics can be inspected together so owners understand where contribution may be leaking." },
+  { eyebrow: "09 / MUNAFFA OS", title: <>Sell more. Waste less.<br/><em>Keep more.</em></>, body: "Guest ordering, waiter operations, kitchen, recipes, inventory, purchasing, billing, CRM and profit intelligence converge into one operating layer for independent restaurants and cafés." }
 ];
 
 export function ImmersiveSite() {
@@ -47,26 +46,34 @@ export function ImmersiveSite() {
     return () => ctx.revert();
   }, [update]);
 
-  function pointerMove(event: React.PointerEvent<HTMLElement>) { update({ pointerX: (event.clientX / window.innerWidth) * 2 - 1, pointerY: -((event.clientY / window.innerHeight) * 2 - 1) }); }
+  function pointerMove(event: React.PointerEvent<HTMLElement>) {
+    update({ pointerX: (event.clientX / window.innerWidth) * 2 - 1, pointerY: -((event.clientY / window.innerHeight) * 2 - 1) });
+  }
 
   return <main ref={root} className={`experience scene-${activeScene}`} onPointerMove={pointerMove}>
     <CinematicWorld/><div className="cinematic-vignette" aria-hidden="true"/><Header/><ProgressRail scene={activeScene}/>
     <div id="experience-story" className="story">
       {chapters.map((chapter, index) => <section id={`chapter-${index}`} data-scene={index} className={`chapter ${index % 2 ? "chapter-right" : "chapter-left"}`} key={chapter.eyebrow}>
-        <div className="chapter-copy"><span className="chapter-kicker" data-reveal>{chapter.eyebrow}</span><h1 data-reveal>{chapter.title}</h1><p data-reveal>{chapter.body}</p>
-          {index === 0 && <a href="#chapter-1" className="scroll-cue" data-reveal>Enter Munaffa <ArrowDown size={15}/></a>}
-          {index === 2 && <><MenuExperience/><a className="story-deep-link" href="/order" data-reveal><QrCode size={14}/> Open guest ordering</a></>}
-          {index === 3 && <div className="product-caption" data-reveal><UtensilsCrossed size={15}/><span>Product presentation, recipe logic and theoretical food cost belong to the same operating story.</span></div>}
-          {index === 4 && <ARLens/>}
+        <div className="chapter-copy">
+          <span className="chapter-kicker" data-reveal>{chapter.eyebrow}</span>
+          <h1 data-reveal>{chapter.title}</h1>
+          <p data-reveal>{chapter.body}</p>
+          {index === 0 && <a href="#chapter-1" className="scroll-cue" data-reveal>Follow one order <ArrowDown size={15}/></a>}
+          {index === 1 && <><MenuExperience/><a className="story-deep-link" href="/order" data-reveal><QrCode size={14}/> Open guest ordering</a></>}
+          {index === 4 && <div className="product-caption" data-reveal><UtensilsCrossed size={15}/><span>Recipe costing is theoretical until reconciled with purchasing, waste and physical stock. Munaffa keeps those concepts separate.</span></div>}
           {index === 7 && <ProfitLens/>}
-          {index === 8 && <div className="final-actions" data-reveal><a href="/app" className="primary-action"><LayoutDashboard size={14}/> Open Munaffa OS</a><a href="/order" className="secondary-action"><QrCode size={14}/> Guest ordering</a><a href="/pilot" className="secondary-action">Start a pilot</a></div>}
-        </div><span className="chapter-index" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+          {index === 8 && <>
+            <div className="industry-cloud" data-reveal><span>Launch · ₹999/mo</span><span>Growth · ₹2,499/mo</span><span>Profit · ₹4,999/mo</span><span>30-day design-partner pilot</span></div>
+            <div className="final-actions" data-reveal><a href="/app" className="primary-action"><LayoutDashboard size={14}/> Open Munaffa OS</a><a href="/order" className="secondary-action"><QrCode size={14}/> Guest ordering</a><a href="/pilot" className="secondary-action">Start a pilot</a></div>
+          </>}
+        </div>
+        <span className="chapter-index" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
       </section>)}
     </div>
-    <footer className="site-footer"><Brand/><p>Hospitality operations from guest experience to profit visibility.</p><div><a href="/app">Munaffa OS</a><a href="/order">Ordering</a><a href="/pilot">Pilot</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div></footer>
+    <footer className="site-footer"><Brand/><p>Restaurant operations from guest order to profit visibility.</p><div><a href="/app">Munaffa OS</a><a href="/order">Ordering</a><a href="/pilot">Pilot</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div></footer>
   </main>;
 }
 
-function Header(){return <header className="floating-header"><Brand/><nav><a href="#chapter-2">Ordering</a><a href="#chapter-4"><Camera size={12}/> AR Lens</a><a href="#chapter-7"><CircleDollarSign size={12}/> Profit</a><a href="/app"><LayoutDashboard size={12}/> OS</a></nav><a className="enter-link" href="/order">ENTER <ArrowRight size={12}/></a></header>}
+function Header(){return <header className="floating-header"><Brand/><nav><a href="#chapter-1">Ordering</a><a href="#chapter-2">Kitchen</a><a href="#chapter-3">Inventory</a><a href="#chapter-7">Profit</a><a href="/app"><LayoutDashboard size={12}/> OS</a></nav><a className="enter-link" href="/order">ENTER <ArrowRight size={12}/></a></header>}
 function Brand(){return <a className="brand" href="#chapter-0"><i>M</i><span>MUNAFFA</span></a>}
 function ProgressRail({scene}:{scene:number}){return <aside className="progress-rail" aria-label="Experience chapters">{chapters.map((chapter,index)=><a key={chapter.eyebrow} href={`#chapter-${index}`} className={index===scene?"active":index<scene?"passed":""} aria-label={`Go to ${chapter.eyebrow}`}><i/></a>)}</aside>}
